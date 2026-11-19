@@ -1,0 +1,1509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StoreGuard · My Cash Drawer</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f7f9fc;
+      color: #1e2b3c;
+      overflow-x: hidden;
+    }
+    :root {
+      --forest-green: #0f3d2b;
+      --forest-light: #1b5e3f;
+      --emerald: #2e7d5e;
+      --emerald-muted: #3a8a6e;
+      --charcoal: #1e2b3c;
+      --charcoal-light: #2e3b4e;
+      --off-white: #f7f9fc;
+      --card-border: #e6eaef;
+      --warning-amber: #c77b1a;
+      --critical-red: #b33b3b;
+      --text-secondary: #5f6c7e;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      background-color: #ffffff;
+      border-right: 1px solid var(--card-border);
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 280px;
+      transition: transform 0.25s ease, width 0.25s ease;
+      z-index: 1040;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      box-shadow: 2px 0 12px rgba(0,0,0,0.02);
+    }
+    .sidebar.collapsed { width: 80px; }
+    .sidebar.collapsed .nav-text,
+    .sidebar.collapsed .brand-text,
+    .sidebar.collapsed .store-selector,
+    .sidebar.collapsed .user-details,
+    .sidebar.collapsed .section-label { display: none; }
+    .sidebar.collapsed .nav-item i { margin-right: 0; font-size: 1.25rem; }
+    .sidebar.collapsed .nav-link { justify-content: center; padding: 0.7rem 0; }
+    .sidebar-header {
+      padding: 1.25rem 1rem;
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid var(--card-border);
+      min-height: 72px;
+    }
+    .sidebar-header .brand-icon {
+      background: var(--forest-green);
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+    .sidebar-header .brand-text {
+      font-weight: 700;
+      font-size: 1.25rem;
+      color: var(--charcoal);
+      letter-spacing: -0.3px;
+    }
+    .sidebar-header .brand-text small {
+      display: block;
+      font-weight: 400;
+      font-size: 0.65rem;
+      color: var(--text-secondary);
+      letter-spacing: 0.3px;
+    }
+    .store-selector {
+      margin: 0.75rem 1rem;
+      background: #f2f5f9;
+      border-radius: 8px;
+      padding: 0.5rem 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--charcoal);
+      border: 1px solid var(--card-border);
+    }
+    .store-selector i { font-size: 0.9rem; color: var(--emerald); }
+    .nav-section { padding: 0 0.75rem; margin-top: 0.5rem; margin-bottom: 0.25rem; }
+    .section-label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      font-weight: 600;
+      color: #8a97a8;
+      padding-left: 0.75rem;
+      margin: 1rem 0 0.5rem;
+    }
+    .nav-item { margin-bottom: 2px; }
+    .nav-link {
+      display: flex;
+      align-items: center;
+      padding: 0.65rem 0.75rem;
+      border-radius: 8px;
+      color: #3d4b5e;
+      font-size: 0.9rem;
+      font-weight: 500;
+      text-decoration: none;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .nav-link i {
+      font-size: 1.1rem;
+      margin-right: 12px;
+      width: 22px;
+      text-align: center;
+      color: #6e7d90;
+    }
+    .nav-link:hover { background: #f0f4f9; color: var(--forest-green); }
+    .nav-link.active { background: #e9f1ed; color: var(--forest-green); font-weight: 600; }
+    .nav-link.active i { color: var(--forest-green); }
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 1rem 0.75rem;
+      border-top: 1px solid var(--card-border);
+    }
+    .user-profile {
+      display: flex;
+      align-items: center;
+      padding: 0.5rem;
+      border-radius: 8px;
+      background: #f8fafc;
+    }
+    .user-avatar {
+      width: 38px;
+      height: 38px;
+      background: var(--forest-green);
+      color: white;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      margin-right: 10px;
+      flex-shrink: 0;
+    }
+    .user-details .user-name { font-weight: 600; font-size: 0.85rem; }
+    .user-details .user-role { font-size: 0.7rem; color: var(--text-secondary); }
+
+    /* Main layout */
+    .main-content {
+      margin-left: 280px;
+      transition: margin-left 0.25s ease;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .main-content.expanded { margin-left: 80px; }
+    .top-navbar {
+      background: #ffffff;
+      border-bottom: 1px solid var(--card-border);
+      padding: 0.6rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 1030;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .navbar-left { display: flex; align-items: center; gap: 1rem; }
+    .sidebar-toggle {
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      color: var(--charcoal);
+      padding: 0.2rem 0.4rem;
+      border-radius: 6px;
+      line-height: 1;
+    }
+    .sidebar-toggle:hover { background: #f0f4f9; }
+    .breadcrumb-text { font-size: 0.9rem; font-weight: 500; color: var(--text-secondary); }
+    .breadcrumb-text span { color: var(--charcoal); font-weight: 600; }
+    .navbar-center { flex: 1; max-width: 420px; margin: 0 1rem; }
+    .global-search {
+      background: #f2f5f9;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 0.45rem 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .global-search i { color: #9aa8b9; font-size: 0.9rem; }
+    .global-search input {
+      border: none;
+      background: transparent;
+      font-size: 0.85rem;
+      width: 100%;
+      outline: none;
+    }
+    .navbar-right { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+    .date-badge {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      background: #f2f5f9;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+    .icon-btn {
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      color: var(--charcoal);
+      position: relative;
+      padding: 0.3rem 0.5rem;
+      border-radius: 8px;
+    }
+    .icon-btn:hover { background: #f0f4f9; }
+    .badge-dot {
+      position: absolute;
+      top: 2px;
+      right: 4px;
+      background: var(--critical-red);
+      color: white;
+      font-size: 0.55rem;
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+    }
+    .connectivity-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.75rem;
+      padding: 0.3rem 0.7rem;
+      border-radius: 20px;
+      background: #eef8f2;
+      color: #1f6d4a;
+      font-weight: 500;
+    }
+    .profile-dropdown-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: none;
+      border: none;
+      padding: 0.2rem 0.5rem;
+      border-radius: 8px;
+    }
+    .profile-dropdown-btn:hover { background: #f0f4f9; }
+    .profile-initials-sm {
+      width: 32px;
+      height: 32px;
+      background: var(--forest-green);
+      color: white;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.8rem;
+    }
+
+    /* Drawer page */
+    .drawer-content { padding: 1.5rem 1.5rem 0; flex: 1; }
+    .page-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+    .page-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.4px;
+      color: var(--charcoal);
+      margin-bottom: 0.15rem;
+    }
+    .page-subtitle { font-size: 0.9rem; color: var(--text-secondary); }
+    .page-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+    .btn-outline-soft {
+      border: 1px solid var(--card-border);
+      background: white;
+      border-radius: 8px;
+      padding: 0.4rem 0.9rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--charcoal);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .btn-outline-soft:hover { background: #f0f4f9; }
+    .btn-forest {
+      background: var(--forest-green);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 0.4rem 1rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .btn-forest:hover { background: #0c3323; color: white; }
+    .btn-amber {
+      background: var(--warning-amber);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 0.4rem 1rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .btn-amber:hover { background: #a7681a; color: white; }
+    .btn-red-soft {
+      background: #fce9e9;
+      color: var(--critical-red);
+      border: 1px solid #f0c0c0;
+      border-radius: 8px;
+      padding: 0.4rem 1rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .btn-red-soft:hover { background: #f8dada; }
+
+    /* Drawer hero card */
+    .drawer-hero {
+      background: linear-gradient(135deg, #ffffff 0%, #f7f9fc 100%);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+      position: relative;
+      overflow: hidden;
+    }
+    .drawer-hero::after {
+      content: '';
+      position: absolute;
+      top: -80px;
+      right: -80px;
+      width: 220px;
+      height: 220px;
+      background: radial-gradient(circle, rgba(46,125,94,0.06) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .drawer-hero-left { display: flex; align-items: center; gap: 1.25rem; position: relative; z-index: 2; }
+    .drawer-icon-big {
+      width: 64px;
+      height: 64px;
+      background: var(--forest-green);
+      color: white;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      flex-shrink: 0;
+      box-shadow: 0 8px 20px rgba(15,61,43,0.2);
+    }
+    .drawer-hero-info h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 0.15rem;
+      letter-spacing: -0.2px;
+    }
+    .drawer-hero-info p {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+    .drawer-status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: #e9f1ed;
+      color: #1f6d4a;
+      padding: 0.25rem 0.7rem;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      margin-top: 0.4rem;
+    }
+    .drawer-status-chip .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #1f6d4a;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .drawer-hero-right {
+      display: flex;
+      gap: 1.5rem;
+      position: relative;
+      z-index: 2;
+      flex-wrap: wrap;
+    }
+    .drawer-balance-block { text-align: right; }
+    .drawer-balance-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--text-secondary);
+      margin-bottom: 0.2rem;
+      font-weight: 500;
+    }
+    .drawer-balance-value {
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: -0.8px;
+      color: var(--forest-green);
+      line-height: 1.1;
+    }
+    .drawer-balance-sub {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      margin-top: 0.2rem;
+    }
+    .drawer-variance {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+      margin-top: 0.3rem;
+    }
+    .variance-ok { background: #e9f1ed; color: #1f6d4a; }
+    .variance-warn { background: #fff4e5; color: #a7681a; }
+    .variance-danger { background: #fce9e9; color: #a13d3d; }
+
+    /* Stats grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .stat-card {
+      background: white;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1rem 1.1rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    }
+    .stat-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-bottom: 0.3rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .stat-value { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.5px; color: var(--charcoal); line-height: 1.2; }
+    .stat-sub { font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.3rem; }
+    .kpi-icon { font-size: 1.1rem; color: var(--emerald); opacity: 0.7; }
+    .text-emerald { color: var(--emerald); }
+    .text-amber { color: var(--warning-amber); }
+    .text-red { color: var(--critical-red); }
+
+    /* Section cards */
+    .section-card {
+      background: white;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+      margin-bottom: 1.5rem;
+      height: 100%;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .section-title { font-size: 1rem; font-weight: 600; color: var(--charcoal); letter-spacing: -0.2px; }
+    .section-title i { color: var(--emerald); margin-right: 0.4rem; }
+
+    /* Chart */
+    .chart-container { position: relative; height: 200px; width: 100%; }
+
+    /* Cash breakdown */
+    .cash-breakdown-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 0.75rem;
+    }
+    .cash-denom-card {
+      background: #f7f9fc;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 0.75rem;
+      text-align: center;
+    }
+    .cash-denom-label { font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.2rem; }
+    .cash-denom-value { font-size: 1.1rem; font-weight: 700; color: var(--charcoal); }
+    .cash-denom-count { font-size: 0.65rem; color: var(--text-secondary); margin-top: 0.15rem; }
+
+    /* Drawer activity table */
+    .table-custom { font-size: 0.8rem; margin-bottom: 0; }
+    .table-custom th {
+      font-weight: 600;
+      color: #6e7d90;
+      text-transform: uppercase;
+      font-size: 0.65rem;
+      letter-spacing: 0.4px;
+      border-bottom: 1px solid var(--card-border);
+      padding: 0.6rem 0.3rem;
+      background: transparent;
+      white-space: nowrap;
+    }
+    .table-custom td {
+      padding: 0.7rem 0.3rem;
+      vertical-align: middle;
+      border-bottom: 1px solid #f0f3f7;
+      color: var(--charcoal);
+    }
+    .table-custom tbody tr:hover { background: #fafcff; }
+    .badge-type {
+      font-size: 0.65rem;
+      font-weight: 600;
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+      display: inline-block;
+      white-space: nowrap;
+    }
+    .badge-in { background: #e9f1ed; color: #1f6d4a; }
+    .badge-out { background: #fce9e9; color: #a13d3d; }
+    .badge-sale { background: #e8eefc; color: #3a5bb0; }
+    .badge-refund { background: #fff4e5; color: #a7681a; }
+    .badge-adjust { background: #f3e8fd; color: #6b3fa0; }
+
+    /* Reconciliation */
+    .recon-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.6rem 0;
+      border-bottom: 1px solid #f0f3f7;
+      font-size: 0.85rem;
+    }
+    .recon-item:last-child { border-bottom: none; }
+    .recon-item .label { color: var(--text-secondary); }
+    .recon-item .value { font-weight: 600; color: var(--charcoal); }
+    .recon-item.total {
+      border-top: 1px dashed #ccd6e0;
+      margin-top: 0.5rem;
+      padding-top: 0.75rem;
+      font-size: 1rem;
+    }
+    .recon-item.total .value { color: var(--forest-green); font-size: 1.1rem; }
+    .recon-item .value.negative { color: var(--critical-red); }
+    .recon-item .value.positive { color: #1f6d4a; }
+
+    /* Large input for reconciliation */
+    .recon-input {
+      background: #f7f9fc;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 0.6rem 0.9rem;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--charcoal);
+      width: 100%;
+      outline: none;
+      font-family: 'Inter', sans-serif;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .recon-input:focus {
+      border-color: var(--emerald);
+      box-shadow: 0 0 0 3px rgba(46,125,94,0.1);
+      background: white;
+    }
+    .recon-input::placeholder { color: #b0bccb; font-weight: 400; }
+
+    /* Timeline */
+    .timeline { position: relative; padding-left: 1.5rem; }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 5px;
+      top: 6px;
+      bottom: 6px;
+      width: 2px;
+      background: var(--card-border);
+    }
+    .timeline-item {
+      position: relative;
+      padding-bottom: 1rem;
+    }
+    .timeline-item:last-child { padding-bottom: 0; }
+    .timeline-dot {
+      position: absolute;
+      left: -1.5rem;
+      top: 3px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: white;
+      border: 2px solid var(--emerald);
+    }
+    .timeline-dot.warning { border-color: var(--warning-amber); }
+    .timeline-dot.critical { border-color: var(--critical-red); }
+    .timeline-dot.success { border-color: #1f6d4a; background: #1f6d4a; }
+    .timeline-content { font-size: 0.8rem; }
+    .timeline-title { font-weight: 600; color: var(--charcoal); margin-bottom: 0.1rem; }
+    .timeline-meta { font-size: 0.7rem; color: var(--text-secondary); }
+
+    /* Footer */
+    .app-footer {
+      margin-top: 1.5rem;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--card-border);
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .footer-link { color: var(--emerald); text-decoration: none; font-weight: 500; }
+    .footer-link:hover { text-decoration: underline; }
+
+    /* Mobile */
+    .mobile-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.3);
+      z-index: 1035;
+    }
+    @media (max-width: 991.98px) {
+      .sidebar { transform: translateX(-100%); width: 280px; }
+      .sidebar.show { transform: translateX(0); }
+      .main-content { margin-left: 0 !important; }
+      .mobile-overlay.show { display: block; }
+      .navbar-center { max-width: 100%; order: 3; flex-basis: 100%; margin: 0.4rem 0 0; }
+    }
+    @media (max-width: 575.98px) {
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .drawer-content { padding: 1rem 1rem 0; }
+      .drawer-hero { padding: 1.1rem; }
+      .drawer-balance-value { font-size: 1.4rem; }
+      .drawer-hero-right { width: 100%; justify-content: space-between; }
+    }
+
+    /* Modal */
+    .modal-content { border-radius: 14px; border: none; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
+    .modal-header { border-bottom: 1px solid var(--card-border); padding: 1rem 1.25rem; }
+    .modal-title { font-size: 1rem; font-weight: 600; }
+    .modal-body { padding: 1.25rem; }
+    .modal-footer { border-top: 1px solid var(--card-border); padding: 0.75rem 1.25rem; }
+    .form-label { font-size: 0.75rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.2rem; }
+    .form-control-sm, .form-select-sm { font-size: 0.8rem; border-radius: 8px; border-color: var(--card-border); }
+    .form-control-sm:focus, .form-select-sm:focus { border-color: var(--emerald); box-shadow: 0 0 0 3px rgba(46,125,94,0.1); }
+  </style>
+</head>
+<body>
+
+  <div class="mobile-overlay" id="mobileOverlay"></div>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="brand-icon"><i class="bi bi-shield-lock-fill"></i></div>
+      <div class="brand-text">StoreGuard<small>Retail intelligence</small></div>
+    </div>
+    <div class="store-selector">
+      <span><i class="bi bi-shop me-1"></i>Accra Central</span>
+      <i class="bi bi-chevron-down"></i>
+    </div>
+    <div class="nav-section">
+      <div class="section-label">Cashier</div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-grid-1x2-fill"></i><span class="nav-text">My Dashboard</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-upc-scan"></i><span class="nav-text">Open POS</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-receipt"></i><span class="nav-text">My Transactions</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-arrow-return-left"></i><span class="nav-text">My Refunds</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-clock-history"></i><span class="nav-text">My Shift</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link active"><i class="bi bi-cash-stack"></i><span class="nav-text">My Cash Drawer</span></a></div>
+    </div>
+    <div class="nav-section">
+      <div class="section-label">Help</div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-question-circle"></i><span class="nav-text">Support</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-info-circle"></i><span class="nav-text">About StoreGuard</span></a></div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="user-profile">
+        <div class="user-avatar">KM</div>
+        <div class="user-details">
+          <div class="user-name">Kwame Mensah</div>
+          <div class="user-role">Cashier · Morning shift</div>
+        </div>
+        <i class="bi bi-box-arrow-right ms-auto text-secondary" style="font-size:0.9rem; cursor:pointer;" title="Logout"></i>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content" id="mainContent">
+
+    <!-- TOP NAVBAR -->
+    <nav class="top-navbar">
+      <div class="navbar-left">
+        <button class="sidebar-toggle" id="sidebarToggle"><i class="bi bi-list"></i></button>
+        <div class="breadcrumb-text">Cashier / <span>My Cash Drawer</span></div>
+      </div>
+      <div class="navbar-center">
+        <div class="global-search">
+          <i class="bi bi-search"></i>
+          <input type="text" placeholder="Search drawer activity...">
+        </div>
+      </div>
+      <div class="navbar-right">
+        <span class="date-badge"><i class="bi bi-calendar3 me-1"></i>Wed, 15 Apr 2026</span>
+        <div class="connectivity-indicator"><i class="bi bi-wifi"></i> Online</div>
+        <button class="icon-btn" title="Notifications"><i class="bi bi-bell"></i><span class="badge-dot">1</span></button>
+        <div class="dropdown">
+          <button class="profile-dropdown-btn" data-bs-toggle="dropdown">
+            <div class="profile-initials-sm">KM</div>
+            <i class="bi bi-chevron-down" style="font-size:0.7rem;"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>My profile</a></li>
+            <li><a class="dropdown-item" href="#"><i class="bi bi-clock-history me-2"></i>Shift history</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!-- DRAWER CONTENT -->
+    <div class="drawer-content">
+
+      <!-- Page header -->
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">My Cash Drawer</h1>
+          <p class="page-subtitle">Track your cash flow, reconcile your drawer, and view shift history.</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn-outline-soft" id="printDrawerBtn"><i class="bi bi-printer"></i> Print summary</button>
+          <button class="btn-amber" id="cashOutBtn"><i class="bi bi-box-arrow-up"></i> Cash out</button>
+          <button class="btn-forest" id="cashInBtn"><i class="bi bi-box-arrow-in-down"></i> Cash in</button>
+        </div>
+      </div>
+
+      <!-- Drawer hero card -->
+      <div class="drawer-hero">
+        <div class="drawer-hero-left">
+          <div class="drawer-icon-big"><i class="bi bi-cash-stack"></i></div>
+          <div class="drawer-hero-info">
+            <h2>Drawer #POS-01 · Morning shift</h2>
+            <p>Assigned to Kwame Mensah · Opened 06:00 AM by supervisor Yaw Darko</p>
+            <span class="drawer-status-chip"><span class="dot"></span> Drawer open · Active shift</span>
+          </div>
+        </div>
+        <div class="drawer-hero-right">
+          <div class="drawer-balance-block">
+            <div class="drawer-balance-label">Current expected balance</div>
+            <div class="drawer-balance-value" id="heroBalance">GH₵ 1,240.00</div>
+            <div class="drawer-balance-sub">Opening GH₵ 200.00 + net cash movement</div>
+            <span class="drawer-variance variance-ok" id="heroVariance"><i class="bi bi-check-circle-fill"></i> Balanced</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Opening cash <i class="bi bi-wallet2 kpi-icon"></i></div>
+          <div class="stat-value" id="statOpening">GH₵ 200.00</div>
+          <div class="stat-sub">Confirmed by supervisor</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Cash sales <i class="bi bi-cart-check kpi-icon"></i></div>
+          <div class="stat-value text-emerald" id="statCashSales">GH₵ 2,840.00</div>
+          <div class="stat-sub">24 cash transactions</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Cash refunds <i class="bi bi-arrow-return-left kpi-icon"></i></div>
+          <div class="stat-value text-amber" id="statCashRefunds">– GH₵ 84.00</div>
+          <div class="stat-sub">2 refunds issued</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Cash in / out <i class="bi bi-arrow-left-right kpi-icon"></i></div>
+          <div class="stat-value" id="statCashInOut">GH₵ 0.00</div>
+          <div class="stat-sub">No withdrawals today</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Expected closing <i class="bi bi-calculator kpi-icon"></i></div>
+          <div class="stat-value text-emerald" id="statExpected">GH₵ 1,240.00</div>
+          <div class="stat-sub">Before actual count</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Variance <i class="bi bi-exclamation-diamond kpi-icon"></i></div>
+          <div class="stat-value" id="statVariance">GH₵ 0.00</div>
+          <div class="stat-sub" id="statVarianceSub">No discrepancy recorded</div>
+        </div>
+      </div>
+
+      <!-- Row: Cash flow chart + Reconciliation -->
+      <div class="row g-4 mb-2">
+        <div class="col-lg-7">
+          <div class="section-card">
+            <div class="section-header">
+              <div class="section-title"><i class="bi bi-graph-up"></i> Cash flow this shift</div>
+              <span class="text-secondary" style="font-size:0.7rem;">06:00 – now</span>
+            </div>
+            <div class="chart-container">
+              <canvas id="cashFlowChart"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-5">
+          <div class="section-card">
+            <div class="section-header">
+              <div class="section-title"><i class="bi bi-calculator"></i> Drawer reconciliation</div>
+              <span class="text-secondary" style="font-size:0.7rem;">Live</span>
+            </div>
+            <div class="recon-item"><span class="label">Opening cash</span><span class="value">GH₵ 200.00</span></div>
+            <div class="recon-item"><span class="label">+ Cash sales</span><span class="value positive">GH₵ 2,840.00</span></div>
+            <div class="recon-item"><span class="label">– Cash refunds</span><span class="value negative">– GH₵ 84.00</span></div>
+            <div class="recon-item"><span class="label">+ Cash in</span><span class="value positive">GH₵ 0.00</span></div>
+            <div class="recon-item"><span class="label">– Cash out</span><span class="value negative">– GH₵ 0.00</span></div>
+            <div class="recon-item total"><span class="label fw-bold">Expected closing</span><span class="value" id="expectedClosing">GH₵ 1,240.00</span></div>
+
+            <div class="mt-3">
+              <label class="form-label">Actual counted cash</label>
+              <input type="number" step="0.01" min="0" class="recon-input" id="actualCashInput" placeholder="Enter amount you counted...">
+            </div>
+            <div class="recon-item mt-2" style="border-bottom:none;">
+              <span class="label">Variance</span>
+              <span class="value" id="varianceDisplay">—</span>
+            </div>
+            <button class="btn-forest w-100 mt-2" id="reconcileBtn" disabled>
+              <i class="bi bi-check-circle"></i> Submit reconciliation
+            </button>
+            <p class="text-secondary mt-2 mb-0" style="font-size:0.7rem;"><i class="bi bi-info-circle me-1"></i>Submitting reconciliation sends it to your supervisor for approval.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row: Cash denominations + Timeline -->
+      <div class="row g-4 mb-2">
+        <div class="col-lg-5">
+          <div class="section-card">
+            <div class="section-header">
+              <div class="section-title"><i class="bi bi-stack"></i> Cash by denomination</div>
+              <span class="text-secondary" style="font-size:0.7rem;">Physical count</span>
+            </div>
+            <div class="cash-breakdown-grid">
+              <div class="cash-denom-card">
+                <div class="cash-denom-label">GH₵ 100 notes</div>
+                <div class="cash-denom-value">GH₵ 800.00</div>
+                <div class="cash-denom-count">× 8 notes</div>
+              </div>
+              <div class="cash-denom-card">
+                <div class="cash-denom-label">GH₵ 50 notes</div>
+                <div class="cash-denom-value">GH₵ 300.00</div>
+                <div class="cash-denom-count">× 6 notes</div>
+              </div>
+              <div class="cash-denom-card">
+                <div class="cash-denom-label">GH₵ 20 notes</div>
+                <div class="cash-denom-value">GH₵ 100.00</div>
+                <div class="cash-denom-count">× 5 notes</div>
+              </div>
+              <div class="cash-denom-card">
+                <div class="cash-denom-label">GH₵ 10 notes</div>
+                <div class="cash-denom-value">GH₵ 30.00</div>
+                <div class="cash-denom-count">× 3 notes</div>
+              </div>
+              <div class="cash-denom-card">
+                <div class="cash-denom-label">GH₵ 5 notes</div>
+                <div class="cash-denom-value">GH₵ 10.00</div>
+                <div class="cash-denom-count">× 2 notes</div>
+              </div>
+              <div class="cash-denom-card">
+                <div class="cash-denom-label">Coins</div>
+                <div class="cash-denom-value">GH₵ 0.00</div>
+                <div class="cash-denom-count">No coins</div>
+              </div>
+            </div>
+            <div class="recon-item total mt-2"><span class="label fw-bold">Total counted</span><span class="value">GH₵ 1,240.00</span></div>
+          </div>
+        </div>
+        <div class="col-lg-7">
+          <div class="section-card">
+            <div class="section-header">
+              <div class="section-title"><i class="bi bi-clock-history"></i> Drawer activity timeline</div>
+            </div>
+            <div class="timeline">
+              <div class="timeline-item">
+                <div class="timeline-dot success"></div>
+                <div class="timeline-content">
+                  <div class="timeline-title">Shift opened · Drawer initialized</div>
+                  <div class="timeline-meta">06:00 AM · Opening cash GH₵ 200.00 confirmed by Yaw Darko (Supervisor)</div>
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-dot success"></div>
+                <div class="timeline-content">
+                  <div class="timeline-title">First cash sale · TX-8802</div>
+                  <div class="timeline-meta">06:55 AM · GH₵ 92.50 · Customer paid cash</div>
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                  <div class="timeline-title">Cash sale · TX-8811</div>
+                  <div class="timeline-meta">08:02 AM · GH₵ 18.00</div>
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-dot warning"></div>
+                <div class="timeline-content">
+                  <div class="timeline-title">Cash refund · TX-8796</div>
+                  <div class="timeline-meta">08:45 AM · –GH₵ 42.00 · Customer returned damaged item</div>
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                  <div class="timeline-title">Cash sale · TX-8818</div>
+                  <div class="timeline-meta">09:15 AM · GH₵ 47.00</div>
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-dot warning"></div>
+                <div class="timeline-content">
+                  <div class="timeline-title">Cash refund · TX-8821</div>
+                  <div class="timeline-meta">09:50 AM · –GH₵ 42.00 · Wrong item refund</div>
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-dot success"></div>
+                <div class="timeline-content">
+                  <div class="timeline-title">Latest cash sale · TX-8821</div>
+                  <div class="timeline-meta">09:42 AM · GH₵ 84.00 · MoMo (no cash impact)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Drawer activity table -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-title"><i class="bi bi-list-ul"></i> Drawer activity log</div>
+          <button class="btn-outline-soft" style="font-size:0.7rem; padding:0.25rem 0.6rem;" id="exportActivityBtn"><i class="bi bi-download"></i> Export</button>
+        </div>
+        <div class="table-responsive">
+          <table class="table-custom">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Type</th>
+                <th>Reference</th>
+                <th>Description</th>
+                <th>Cash in</th>
+                <th>Cash out</th>
+                <th>Balance</th>
+              </tr>
+            </thead>
+            <tbody id="activityBody">
+              <!-- JS rendered -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <footer class="app-footer">
+        <div>
+          <span class="fw-semibold">StoreGuard</span> — Retail intelligence. Complete accountability. <br>
+          <span style="font-size:0.65rem;">Designed & Developed by <a href="https://nana-kojo.vercel.app" target="_blank" class="footer-link">Nana Kojo</a></span>
+        </div>
+        <div class="text-end">
+          <span>v2.4.0 · © 2026 · All systems operational</span>
+        </div>
+      </footer>
+
+    </div>
+  </div>
+
+  <!-- CASH IN MODAL -->
+  <div class="modal fade" id="cashInModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-box-arrow-in-down me-2 text-forest"></i>Cash in</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Amount (GH₵)</label>
+            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="cashInAmount" placeholder="0.00">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Reason</label>
+            <select class="form-select form-select-sm" id="cashInReason">
+              <option value="Change fund top-up">Change fund top-up</option>
+              <option value="Supervisor float addition">Supervisor float addition</option>
+              <option value="Correction from previous shift">Correction from previous shift</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="mb-0">
+            <label class="form-label">Notes (optional)</label>
+            <textarea class="form-control form-control-sm" id="cashInNotes" rows="2" placeholder="Add a note for your supervisor..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-sm btn-forest" id="confirmCashInBtn"><i class="bi bi-check-lg me-1"></i>Add cash</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CASH OUT MODAL -->
+  <div class="modal fade" id="cashOutModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-box-arrow-up me-2 text-amber"></i>Cash out</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Amount (GH₵)</label>
+            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="cashOutAmount" placeholder="0.00">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Reason</label>
+            <select class="form-select form-select-sm" id="cashOutReason">
+              <option value="Bank deposit">Bank deposit</option>
+              <option value="Supplier payment">Supplier payment</option>
+              <option value="Petty cash expense">Petty cash expense</option>
+              <option value="Supervisor withdrawal">Supervisor withdrawal</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="mb-0">
+            <label class="form-label">Notes (optional)</label>
+            <textarea class="form-control form-control-sm" id="cashOutNotes" rows="2" placeholder="Add a note for your supervisor..."></textarea>
+          </div>
+          <div class="p-2 mt-2 rounded" style="background:#fff4e5; font-size:0.72rem; color:#7a5a1a;">
+            <i class="bi bi-exclamation-triangle me-1"></i>Cash out requires supervisor approval and will be logged in the audit trail.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-sm btn-amber" id="confirmCashOutBtn"><i class="bi bi-check-lg me-1"></i>Withdraw cash</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/storeguard.js"></script>
+  <script>
+    (function() {
+      // ---------- STATE ----------
+      let drawerBalance = 1240.00;
+      let openingCash = 200.00;
+      let cashSales = 2840.00;
+      let cashRefunds = 84.00;
+      let cashInTotal = 0.00;
+      let cashOutTotal = 0.00;
+
+      // Activity log
+      let activityLog = [
+        { time: '06:00 AM', type: 'Opening', ref: '—', desc: 'Drawer opened by Yaw Darko (Supervisor)', cashIn: 200.00, cashOut: 0, balance: 200.00 },
+        { time: '06:55 AM', type: 'Sale', ref: 'TX-8802', desc: 'Cash sale · 4 items', cashIn: 92.50, cashOut: 0, balance: 292.50 },
+        { time: '07:20 AM', type: 'Sale', ref: 'TX-8807', desc: 'Card sale · 7 items (no cash impact)', cashIn: 0, cashOut: 0, balance: 292.50 },
+        { time: '08:02 AM', type: 'Sale', ref: 'TX-8811', desc: 'Cash sale · 2 items', cashIn: 18.00, cashOut: 0, balance: 310.50 },
+        { time: '08:45 AM', type: 'Refund', ref: 'TX-8796', desc: 'Cash refund · Damaged product', cashIn: 0, cashOut: 42.00, balance: 268.50 },
+        { time: '09:15 AM', type: 'Sale', ref: 'TX-8818', desc: 'Cash sale · 2 items', cashIn: 47.00, cashOut: 0, balance: 315.50 },
+        { time: '09:42 AM', type: 'Sale', ref: 'TX-8821', desc: 'MoMo sale · 3 items (no cash impact)', cashIn: 0, cashOut: 0, balance: 315.50 },
+        { time: '09:50 AM', type: 'Refund', ref: 'TX-8821', desc: 'Cash refund · Wrong item', cashIn: 0, cashOut: 42.00, balance: 273.50 },
+        { time: '10:15 AM', type: 'Sale', ref: 'TX-8830', desc: 'Cash sale · 5 items', cashIn: 65.00, cashOut: 0, balance: 338.50 },
+        { time: '10:45 AM', type: 'Sale', ref: 'TX-8835', desc: 'Cash sale · 3 items', cashIn: 38.50, cashOut: 0, balance: 377.00 },
+        { time: '11:10 AM', type: 'Sale', ref: 'TX-8842', desc: 'Cash sale · 6 items', cashIn: 128.00, cashOut: 0, balance: 505.00 },
+        { time: '11:30 AM', type: 'Cash in', ref: 'CI-001', desc: 'Change fund top-up', cashIn: 100.00, cashOut: 0, balance: 605.00 },
+        { time: '11:45 AM', type: 'Sale', ref: 'TX-8848', desc: 'Cash sale · 2 items', cashIn: 42.00, cashOut: 0, balance: 647.00 },
+        { time: '12:05 PM', type: 'Sale', ref: 'TX-8852', desc: 'Cash sale · 4 items', cashIn: 87.50, cashOut: 0, balance: 734.50 },
+        { time: '12:20 PM', type: 'Sale', ref: 'TX-8855', desc: 'Cash sale · 1 item', cashIn: 25.00, cashOut: 0, balance: 759.50 },
+        { time: '12:40 PM', type: 'Sale', ref: 'TX-8860', desc: 'Cash sale · 3 items', cashIn: 64.00, cashOut: 0, balance: 823.50 },
+        { time: '01:05 PM', type: 'Sale', ref: 'TX-8865', desc: 'Cash sale · 2 items', cashIn: 38.00, cashOut: 0, balance: 861.50 },
+        { time: '01:20 PM', type: 'Sale', ref: 'TX-8868', desc: 'Cash sale · 5 items', cashIn: 112.00, cashOut: 0, balance: 973.50 },
+        { time: '01:45 PM', type: 'Sale', ref: 'TX-8872', desc: 'Cash sale · 3 items', cashIn: 58.00, cashOut: 0, balance: 1031.50 },
+        { time: '02:00 PM', type: 'Sale', ref: 'TX-8878', desc: 'Cash sale · 4 items', cashIn: 76.50, cashOut: 0, balance: 1108.00 },
+        { time: '02:20 PM', type: 'Sale', ref: 'TX-8882', desc: 'Cash sale · 2 items', cashIn: 44.00, cashOut: 0, balance: 1152.00 },
+        { time: '02:35 PM', type: 'Sale', ref: 'TX-8885', desc: 'Cash sale · 3 items', cashIn: 88.00, cashOut: 0, balance: 1240.00 },
+      ];
+
+      // ---------- DOM ----------
+      const actualCashInput = document.getElementById('actualCashInput');
+      const varianceDisplay = document.getElementById('varianceDisplay');
+      const reconcileBtn = document.getElementById('reconcileBtn');
+      const expectedClosing = document.getElementById('expectedClosing');
+      const heroBalance = document.getElementById('heroBalance');
+      const heroVariance = document.getElementById('heroVariance');
+      const statVariance = document.getElementById('statVariance');
+      const statVarianceSub = document.getElementById('statVarianceSub');
+
+      // ---------- HELPERS ----------
+      function formatCurrency(amount) {
+        return 'GH₵ ' + amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+
+      function getTypeBadge(type) {
+        switch(type) {
+          case 'Opening': return 'badge-adjust';
+          case 'Sale': return 'badge-sale';
+          case 'Refund': return 'badge-refund';
+          case 'Cash in': return 'badge-in';
+          case 'Cash out': return 'badge-out';
+          case 'Adjustment': return 'badge-adjust';
+          default: return 'badge-adjust';
+        }
+      }
+
+      // ---------- RENDER ACTIVITY TABLE ----------
+      function renderActivity() {
+        const tbody = document.getElementById('activityBody');
+        // Show most recent first
+        const sorted = [...activityLog].reverse();
+        tbody.innerHTML = sorted.map(a => `
+          <tr>
+            <td style="white-space:nowrap;">${a.time}</td>
+            <td><span class="badge-type ${getTypeBadge(a.type)}">${a.type}</span></td>
+            <td style="font-family:monospace; font-size:0.72rem;">${a.ref}</td>
+            <td>${a.desc}</td>
+            <td class="fw-600" style="color:#1f6d4a;">${a.cashIn > 0 ? formatCurrency(a.cashIn) : '—'}</td>
+            <td class="fw-600" style="color:#a13d3d;">${a.cashOut > 0 ? formatCurrency(a.cashOut) : '—'}</td>
+            <td class="fw-600">${formatCurrency(a.balance)}</td>
+          </tr>
+        `).join('');
+      }
+
+      // ---------- UPDATE STATS ----------
+      function updateStats() {
+        document.getElementById('statOpening').textContent = formatCurrency(openingCash);
+        document.getElementById('statCashSales').textContent = formatCurrency(cashSales);
+        document.getElementById('statCashRefunds').textContent = '– ' + formatCurrency(cashRefunds);
+        document.getElementById('statCashInOut').textContent = formatCurrency(cashInTotal - cashOutTotal);
+        document.getElementById('statExpected').textContent = formatCurrency(drawerBalance);
+        expectedClosing.textContent = formatCurrency(drawerBalance);
+        heroBalance.textContent = formatCurrency(drawerBalance);
+
+        if (cashInTotal === 0 && cashOutTotal === 0) {
+          document.getElementById('statCashInOut').parentElement.querySelector('.stat-sub').textContent = 'No withdrawals today';
+        } else {
+          document.getElementById('statCashInOut').parentElement.querySelector('.stat-sub').textContent =
+            `In: ${formatCurrency(cashInTotal)} · Out: ${formatCurrency(cashOutTotal)}`;
+        }
+      }
+
+      // ---------- RECONCILIATION ----------
+      actualCashInput.addEventListener('input', () => {
+        const actual = parseFloat(actualCashInput.value);
+        if (isNaN(actual) || actualCashInput.value.trim() === '') {
+          varianceDisplay.textContent = '—';
+          varianceDisplay.className = 'value';
+          reconcileBtn.disabled = true;
+          heroVariance.className = 'drawer-variance variance-ok';
+          heroVariance.innerHTML = '<i class="bi bi-check-circle-fill"></i> Balanced';
+          statVariance.textContent = 'GH₵ 0.00';
+          statVariance.className = 'stat-value';
+          statVarianceSub.textContent = 'No discrepancy recorded';
+          return;
+        }
+
+        const variance = actual - drawerBalance;
+        const absVariance = Math.abs(variance);
+
+        if (absVariance < 0.01) {
+          varianceDisplay.textContent = 'GH₵ 0.00';
+          varianceDisplay.className = 'value';
+          reconcileBtn.disabled = false;
+          heroVariance.className = 'drawer-variance variance-ok';
+          heroVariance.innerHTML = '<i class="bi bi-check-circle-fill"></i> Balanced';
+          statVariance.textContent = 'GH₵ 0.00';
+          statVariance.className = 'stat-value';
+          statVarianceSub.textContent = 'Drawer is balanced';
+        } else if (variance > 0) {
+          varianceDisplay.textContent = '+' + formatCurrency(variance);
+          varianceDisplay.className = 'value positive';
+          reconcileBtn.disabled = false;
+          heroVariance.className = 'drawer-variance variance-warn';
+          heroVariance.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Over by ' + formatCurrency(absVariance);
+          statVariance.textContent = '+' + formatCurrency(variance);
+          statVariance.className = 'stat-value text-amber';
+          statVarianceSub.textContent = 'Surplus — please verify';
+        } else {
+          varianceDisplay.textContent = '–' + formatCurrency(absVariance);
+          varianceDisplay.className = 'value negative';
+          reconcileBtn.disabled = false;
+          heroVariance.className = 'drawer-variance variance-danger';
+          heroVariance.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Short by ' + formatCurrency(absVariance);
+          statVariance.textContent = '–' + formatCurrency(absVariance);
+          statVariance.className = 'stat-value text-red';
+          statVarianceSub.textContent = 'Shortage — requires supervisor approval';
+        }
+      });
+
+      // ---------- RECONCILE SUBMIT ----------
+      reconcileBtn.addEventListener('click', () => {
+        const actual = parseFloat(actualCashInput.value);
+        if (isNaN(actual)) return;
+        const variance = actual - drawerBalance;
+
+        if (Math.abs(variance) < 0.01) {
+          alert('Reconciliation submitted: Drawer is balanced.\n\nSupervisor has been notified.');
+        } else if (variance > 0) {
+          alert(`Reconciliation submitted: Surplus of ${formatCurrency(variance)}.\n\nYour supervisor will review and confirm.`);
+        } else {
+          alert(`Reconciliation submitted: Shortage of ${formatCurrency(Math.abs(variance))}.\n\nThis requires supervisor approval and will be logged in the audit trail.`);
+        }
+
+        // Update activity log with reconciliation
+        activityLog.push({
+          time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
+          type: 'Adjustment',
+          ref: 'RECON-001',
+          desc: `Drawer reconciled · Actual: ${formatCurrency(actual)} · Variance: ${variance >= 0 ? '+' : ''}${formatCurrency(variance)}`,
+          cashIn: 0,
+          cashOut: 0,
+          balance: drawerBalance
+        });
+        renderActivity();
+
+        // Reset
+        actualCashInput.value = '';
+        reconcileBtn.disabled = true;
+        varianceDisplay.textContent = '—';
+        varianceDisplay.className = 'value';
+      });
+
+      // ---------- CASH IN ----------
+      const cashInModal = new bootstrap.Modal(document.getElementById('cashInModal'));
+      const cashOutModal = new bootstrap.Modal(document.getElementById('cashOutModal'));
+
+      document.getElementById('cashInBtn').addEventListener('click', () => {
+        document.getElementById('cashInAmount').value = '';
+        document.getElementById('cashInNotes').value = '';
+        cashInModal.show();
+      });
+
+      document.getElementById('confirmCashInBtn').addEventListener('click', () => {
+        const amount = parseFloat(document.getElementById('cashInAmount').value);
+        if (isNaN(amount) || amount <= 0) {
+          alert('Please enter a valid positive amount.');
+          return;
+        }
+
+        drawerBalance += amount;
+        cashInTotal += amount;
+
+        const reason = document.getElementById('cashInReason').value;
+        activityLog.push({
+          time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
+          type: 'Cash in',
+          ref: 'CI-' + String(Math.floor(Math.random() * 900) + 100),
+          desc: reason,
+          cashIn: amount,
+          cashOut: 0,
+          balance: drawerBalance
+        });
+
+        cashInModal.hide();
+        updateStats();
+        renderActivity();
+        alert(`Cash in recorded: ${formatCurrency(amount)} added to drawer.\nNew balance: ${formatCurrency(drawerBalance)}`);
+      });
+
+      // ---------- CASH OUT ----------
+      document.getElementById('cashOutBtn').addEventListener('click', () => {
+        document.getElementById('cashOutAmount').value = '';
+        document.getElementById('cashOutNotes').value = '';
+        cashOutModal.show();
+      });
+
+      document.getElementById('confirmCashOutBtn').addEventListener('click', () => {
+        const amount = parseFloat(document.getElementById('cashOutAmount').value);
+        if (isNaN(amount) || amount <= 0) {
+          alert('Please enter a valid positive amount.');
+          return;
+        }
+        if (amount > drawerBalance) {
+          alert('Cannot withdraw more than the current drawer balance of ' + formatCurrency(drawerBalance) + '.');
+          return;
+        }
+
+        drawerBalance -= amount;
+        cashOutTotal += amount;
+
+        const reason = document.getElementById('cashOutReason').value;
+        activityLog.push({
+          time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
+          type: 'Cash out',
+          ref: 'CO-' + String(Math.floor(Math.random() * 900) + 100),
+          desc: reason,
+          cashIn: 0,
+          cashOut: amount,
+          balance: drawerBalance
+        });
+
+        cashOutModal.hide();
+        updateStats();
+        renderActivity();
+        alert(`Cash out recorded: ${formatCurrency(amount)} withdrawn.\nNew balance: ${formatCurrency(drawerBalance)}.\n\nSupervisor approval has been requested.`);
+      });
+
+      // ---------- CHART ----------
+      function initChart() {
+        const ctx = document.getElementById('cashFlowChart').getContext('2d');
+        // Sample cash flow data per hour
+        new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: ['6am', '7am', '8am', '9am', '10am', '11am', '12pm', '1pm', '2pm'],
+            datasets: [
+              {
+                label: 'Running balance (GH₵)',
+                data: [200, 292, 310, 315, 377, 605, 823, 1031, 1240],
+                borderColor: '#0f3d2b',
+                backgroundColor: 'rgba(15, 61, 43, 0.05)',
+                borderWidth: 2.5,
+                tension: 0.3,
+                pointBackgroundColor: '#0f3d2b',
+                pointRadius: 3,
+                fill: true,
+              },
+              {
+                label: 'Cash in (GH₵)',
+                data: [200, 92, 18, 47, 65, 100, 87, 38, 88],
+                borderColor: '#2e7d5e',
+                borderWidth: 1.5,
+                borderDash: [5, 3],
+                tension: 0.3,
+                pointRadius: 2,
+                pointBackgroundColor: '#2e7d5e',
+                fill: false,
+              },
+              {
+                label: 'Cash out (GH₵)',
+                data: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                borderColor: '#b33b3b',
+                borderWidth: 1.5,
+                borderDash: [5, 3],
+                tension: 0.3,
+                pointRadius: 2,
+                pointBackgroundColor: '#b33b3b',
+                fill: false,
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: true,
+                position: 'top',
+                labels: { boxWidth: 8, boxHeight: 8, font: { size: 10 }, color: '#5f6c7e', usePointStyle: true }
+              },
+              tooltip: {
+                callbacks: { label: (ctx) => ctx.dataset.label + ': GH₵ ' + ctx.parsed.y.toFixed(2) }
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                grid: { color: '#eef2f6' },
+                ticks: { callback: v => 'GH₵ ' + v, font: { size: 10 }, color: '#6e7d90' }
+              },
+              x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#6e7d90' } }
+            }
+          }
+        });
+      }
+
+      // ---------- EXPORT ACTIVITY ----------
+      document.getElementById('exportActivityBtn').addEventListener('click', () => {
+        const rows = activityLog.map(a => ({
+          Time: a.time,
+          Type: a.type,
+          Reference: a.ref,
+          Description: a.desc,
+          'Cash In': a.cashIn.toFixed(2),
+          'Cash Out': a.cashOut.toFixed(2),
+          Balance: a.balance.toFixed(2),
+        }));
+        const headers = Object.keys(rows[0]);
+        const csv = [
+          headers.join(','),
+          ...rows.map(r => headers.map(h => `"${r[h]}"`).join(','))
+        ].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `storeguard_drawer_activity_${new Date().toISOString().slice(0,10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      // ---------- PRINT ----------
+      document.getElementById('printDrawerBtn').addEventListener('click', () => {
+        window.print();
+      });
+
+      // ---------- SIDEBAR ----------
+      const sidebar = document.getElementById('sidebar');
+      const mainContent = document.getElementById('mainContent');
+      const sidebarToggle = document.getElementById('sidebarToggle');
+      const mobileOverlay = document.getElementById('mobileOverlay');
+
+      function checkMobile() { return window.innerWidth < 992; }
+
+      sidebarToggle.addEventListener('click', () => {
+        if (checkMobile()) {
+          sidebar.classList.toggle('show');
+          mobileOverlay.classList.toggle('show');
+        } else {
+          sidebar.classList.toggle('collapsed');
+          mainContent.classList.toggle('expanded');
+        }
+      });
+
+      mobileOverlay.addEventListener('click', () => {
+        sidebar.classList.remove('show');
+        mobileOverlay.classList.remove('show');
+      });
+
+      document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+          if (checkMobile()) {
+            sidebar.classList.remove('show');
+            mobileOverlay.classList.remove('show');
+          }
+          document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+          this.classList.add('active');
+        });
+      });
+
+      // ---------- INIT ----------
+      updateStats();
+      renderActivity();
+      initChart();
+
+    })();
+  </script>
+</body>
+</html>

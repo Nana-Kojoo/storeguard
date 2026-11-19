@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in · StoreGuard</title>
+  <meta name="description" content="StoreGuard retail management — sign in or create your business account.">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" integrity="sha384-XGjxtQfXaH2tnPFa9x+ruJTuLE3Aa6LhHSWRr1XeTyhezb4abCG4ccI5AkVDxqC+" crossorigin="anonymous">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="auth-body">
+
+  <section class="auth-brand" aria-hidden="true">
+    <div class="d-flex align-items-center gap-2">
+      <div class="sg-brand-icon"><i class="bi bi-shield-lock-fill"></i></div>
+      <div class="sg-brand-text text-white">StoreGuard<small class="text-white-50">Retail intelligence</small></div>
+    </div>
+    <div>
+      <h1>Complete accountability for your <span>supermarket.</span></h1>
+      <p>Monitor sales, track inventory, manage staff and catch suspicious activity — from one platform that keeps selling even when the internet drops.</p>
+      <div class="auth-feature"><div class="ic"><i class="bi bi-graph-up-arrow"></i></div><div><strong>Real-time sales analytics</strong><span>Revenue, margins and trends as they happen.</span></div></div>
+      <div class="auth-feature"><div class="ic"><i class="bi bi-shield-exclamation"></i></div><div><strong>Loss prevention</strong><span>Flags unusual refunds, cash shortages and large discounts.</span></div></div>
+      <div class="auth-feature"><div class="ic"><i class="bi bi-cloud-check"></i></div><div><strong>Offline-ready POS</strong><span>Sales queue on the device and sync when you reconnect.</span></div></div>
+      <div class="auth-feature"><div class="ic"><i class="bi bi-people"></i></div><div><strong>Employee accountability</strong><span>Every sale, refund and stock change is tied to a person.</span></div></div>
+    </div>
+    <div class="small text-white-50">StoreGuard — Retail intelligence. Complete accountability.</div>
+  </section>
+
+  <section class="auth-form-panel">
+    <div class="auth-form">
+      <div class="d-flex d-lg-none align-items-center gap-2 mb-4">
+        <div class="sg-brand-icon"><i class="bi bi-shield-lock-fill"></i></div><div class="sg-brand-text">StoreGuard</div>
+      </div>
+      <div class="auth-tabs" role="tablist">
+        <button type="button" class="active" data-tab="login" role="tab" aria-selected="true">Sign in</button>
+        <button type="button" data-tab="signup" role="tab" aria-selected="false" id="signupTab">Create business</button>
+      </div>
+      <div id="authNotice" class="notice mb-3 d-none" role="status"></div>
+
+      <form id="loginForm" novalidate>
+        <h2 class="h4 fw-bold mb-1">Welcome back</h2>
+        <p class="text-muted-sg small mb-4">Sign in with the account your manager created for you.</p>
+        <div class="mb-3">
+          <label class="form-label" for="loginEmail">Email address</label>
+          <div class="input-icon"><i class="bi bi-envelope"></i><input type="email" class="form-control" id="loginEmail" autocomplete="username" required></div>
+        </div>
+        <div class="mb-2">
+          <label class="form-label" for="loginPassword">Password</label>
+          <div class="input-icon"><i class="bi bi-lock"></i><input type="password" class="form-control" id="loginPassword" autocomplete="current-password" required>
+            <button type="button" class="toggle-pw" data-target="loginPassword" aria-label="Show password"><i class="bi bi-eye"></i></button></div>
+        </div>
+        <div class="d-flex justify-content-end mb-3"><a href="#" id="forgotLink" class="small">Forgot password?</a></div>
+        <button type="submit" class="btn-sg btn-forest lg w-100"><i class="bi bi-box-arrow-in-right"></i> Sign in</button>
+      </form>
+
+      <form id="signupForm" class="d-none" novalidate>
+        <h2 class="h4 fw-bold mb-1">Create your business</h2>
+        <p class="text-muted-sg small mb-4">You'll be the owner. Add your staff after signing in.</p>
+        <div class="row g-2">
+          <div class="col-6 mb-2"><label class="form-label" for="suFirst">First name</label><input class="form-control" id="suFirst" autocomplete="given-name" required></div>
+          <div class="col-6 mb-2"><label class="form-label" for="suLast">Last name</label><input class="form-control" id="suLast" autocomplete="family-name" required></div>
+        </div>
+        <div class="mb-2"><label class="form-label" for="suBusiness">Business / store name</label><input class="form-control" id="suBusiness" autocomplete="organization" required></div>
+        <div class="mb-2"><label class="form-label" for="suEmail">Email address</label><input type="email" class="form-control" id="suEmail" autocomplete="email" required></div>
+        <div class="mb-2"><label class="form-label" for="suPhone">Phone (optional)</label><input type="tel" class="form-control" id="suPhone" autocomplete="tel"></div>
+        <div class="mb-2">
+          <label class="form-label" for="suPassword">Password</label>
+          <div class="input-icon"><i class="bi bi-lock"></i><input type="password" class="form-control" id="suPassword" autocomplete="new-password" required>
+            <button type="button" class="toggle-pw" data-target="suPassword" aria-label="Show password"><i class="bi bi-eye"></i></button></div>
+          <div class="strength"><div id="strengthBar"></div></div>
+          <div class="form-text" id="strengthText">At least 10 characters, mixing letters with numbers or symbols.</div>
+        </div>
+        <div class="mb-3"><label class="form-label" for="suConfirm">Confirm password</label><input type="password" class="form-control" id="suConfirm" autocomplete="new-password" required></div>
+        <div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="suTerms"><label class="form-check-label small" for="suTerms">I agree to keep staff and customer data secure and to use StoreGuard lawfully.</label></div>
+        <button type="submit" class="btn-sg btn-forest lg w-100"><i class="bi bi-person-plus"></i> Create account</button>
+      </form>
+    </div>
+  </section>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous" defer></script>
+  <script src="/js/storeguard.js" defer></script>
+  <script src="/js/pages/auth.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StoreGuard · Employees</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f7f9fc;
+      color: #1e2b3c;
+      overflow-x: hidden;
+    }
+    :root {
+      --forest-green: #0f3d2b;
+      --forest-light: #1b5e3f;
+      --emerald: #2e7d5e;
+      --emerald-muted: #3a8a6e;
+      --charcoal: #1e2b3c;
+      --charcoal-light: #2e3b4e;
+      --off-white: #f7f9fc;
+      --card-border: #e6eaef;
+      --warning-amber: #c77b1a;
+      --critical-red: #b33b3b;
+      --text-secondary: #5f6c7e;
+    }
+
+    /* Sidebar (consistent) */
+    .sidebar {
+      background-color: #ffffff;
+      border-right: 1px solid var(--card-border);
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 280px;
+      transition: transform 0.25s ease, width 0.25s ease;
+      z-index: 1040;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      box-shadow: 2px 0 12px rgba(0,0,0,0.02);
+    }
+    .sidebar.collapsed { width: 80px; }
+    .sidebar.collapsed .nav-text,
+    .sidebar.collapsed .brand-text,
+    .sidebar.collapsed .store-selector,
+    .sidebar.collapsed .user-details,
+    .sidebar.collapsed .section-label { display: none; }
+    .sidebar.collapsed .nav-item i { margin-right: 0; font-size: 1.25rem; }
+    .sidebar.collapsed .nav-link { justify-content: center; padding: 0.7rem 0; }
+    .sidebar-header {
+      padding: 1.25rem 1rem;
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid var(--card-border);
+      min-height: 72px;
+    }
+    .sidebar-header .brand-icon {
+      background: var(--forest-green);
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+    .sidebar-header .brand-text {
+      font-weight: 700;
+      font-size: 1.25rem;
+      color: var(--charcoal);
+      letter-spacing: -0.3px;
+    }
+    .sidebar-header .brand-text small {
+      display: block;
+      font-weight: 400;
+      font-size: 0.65rem;
+      color: var(--text-secondary);
+      letter-spacing: 0.3px;
+    }
+    .store-selector {
+      margin: 0.75rem 1rem;
+      background: #f2f5f9;
+      border-radius: 8px;
+      padding: 0.5rem 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--charcoal);
+      border: 1px solid var(--card-border);
+    }
+    .store-selector i { font-size: 0.9rem; color: var(--emerald); }
+    .nav-section { padding: 0 0.75rem; margin-top: 0.5rem; margin-bottom: 0.25rem; }
+    .section-label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      font-weight: 600;
+      color: #8a97a8;
+      padding-left: 0.75rem;
+      margin: 1rem 0 0.5rem;
+    }
+    .nav-item { margin-bottom: 2px; }
+    .nav-link {
+      display: flex;
+      align-items: center;
+      padding: 0.65rem 0.75rem;
+      border-radius: 8px;
+      color: #3d4b5e;
+      font-size: 0.9rem;
+      font-weight: 500;
+      text-decoration: none;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .nav-link i {
+      font-size: 1.1rem;
+      margin-right: 12px;
+      width: 22px;
+      text-align: center;
+      color: #6e7d90;
+    }
+    .nav-link:hover { background: #f0f4f9; color: var(--forest-green); }
+    .nav-link.active { background: #e9f1ed; color: var(--forest-green); font-weight: 600; }
+    .nav-link.active i { color: var(--forest-green); }
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 1rem 0.75rem;
+      border-top: 1px solid var(--card-border);
+    }
+    .user-profile {
+      display: flex;
+      align-items: center;
+      padding: 0.5rem;
+      border-radius: 8px;
+      background: #f8fafc;
+    }
+    .user-avatar {
+      width: 38px;
+      height: 38px;
+      background: var(--forest-green);
+      color: white;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      margin-right: 10px;
+      flex-shrink: 0;
+    }
+    .user-details .user-name { font-weight: 600; font-size: 0.85rem; }
+    .user-details .user-role { font-size: 0.7rem; color: var(--text-secondary); }
+
+    /* Layout */
+    .main-content {
+      margin-left: 280px;
+      transition: margin-left 0.25s ease;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .main-content.expanded { margin-left: 80px; }
+    .top-navbar {
+      background: #ffffff;
+      border-bottom: 1px solid var(--card-border);
+      padding: 0.6rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 1030;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .navbar-left { display: flex; align-items: center; gap: 1rem; }
+    .sidebar-toggle {
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      color: var(--charcoal);
+      padding: 0.2rem 0.4rem;
+      border-radius: 6px;
+      line-height: 1;
+    }
+    .sidebar-toggle:hover { background: #f0f4f9; }
+    .breadcrumb-text { font-size: 0.9rem; font-weight: 500; color: var(--text-secondary); }
+    .breadcrumb-text span { color: var(--charcoal); font-weight: 600; }
+    .navbar-center { flex: 1; max-width: 420px; margin: 0 1rem; }
+    .global-search {
+      background: #f2f5f9;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 0.45rem 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .global-search i { color: #9aa8b9; font-size: 0.9rem; }
+    .global-search input {
+      border: none;
+      background: transparent;
+      font-size: 0.85rem;
+      width: 100%;
+      outline: none;
+    }
+    .navbar-right { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+    .date-badge {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      background: #f2f5f9;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+    .icon-btn {
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      color: var(--charcoal);
+      position: relative;
+      padding: 0.3rem 0.5rem;
+      border-radius: 8px;
+    }
+    .icon-btn:hover { background: #f0f4f9; }
+    .badge-dot {
+      position: absolute;
+      top: 2px;
+      right: 4px;
+      background: var(--critical-red);
+      color: white;
+      font-size: 0.55rem;
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+    }
+    .connectivity-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.75rem;
+      padding: 0.3rem 0.7rem;
+      border-radius: 20px;
+      background: #eef8f2;
+      color: #1f6d4a;
+      font-weight: 500;
+    }
+    .profile-dropdown-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: none;
+      border: none;
+      padding: 0.2rem 0.5rem;
+      border-radius: 8px;
+    }
+    .profile-dropdown-btn:hover { background: #f0f4f9; }
+    .profile-initials-sm {
+      width: 32px;
+      height: 32px;
+      background: var(--forest-green);
+      color: white;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.8rem;
+    }
+
+    /* Employees page */
+    .employees-content { padding: 1.5rem 1.5rem 0; flex: 1; }
+    .page-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+    .page-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.4px;
+      color: var(--charcoal);
+      margin-bottom: 0.15rem;
+    }
+    .page-subtitle { font-size: 0.9rem; color: var(--text-secondary); }
+    .page-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+    .btn-outline-soft {
+      border: 1px solid var(--card-border);
+      background: white;
+      border-radius: 8px;
+      padding: 0.4rem 0.9rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--charcoal);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .btn-outline-soft:hover { background: #f0f4f9; }
+    .btn-forest {
+      background: var(--forest-green);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 0.4rem 1rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .btn-forest:hover { background: #0c3323; color: white; }
+
+    /* Stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .stat-card {
+      background: white;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1rem 1.1rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    }
+    .stat-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-bottom: 0.3rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .stat-value { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.5px; color: var(--charcoal); }
+    .stat-sub { font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.3rem; }
+    .text-emerald { color: var(--emerald); }
+    .text-amber { color: var(--warning-amber); }
+    .text-red { color: var(--critical-red); }
+
+    /* Filters */
+    .filters-bar {
+      background: white;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .filter-search {
+      flex: 1;
+      min-width: 200px;
+      background: #f7f9fc;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 0.4rem 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .filter-search i { color: #9aa8b9; font-size: 0.9rem; }
+    .filter-search input {
+      border: none;
+      background: transparent;
+      font-size: 0.8rem;
+      width: 100%;
+      outline: none;
+      font-family: 'Inter', sans-serif;
+    }
+    .filter-select {
+      background: #f7f9fc;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 0.4rem 0.8rem;
+      font-size: 0.8rem;
+      color: var(--charcoal);
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      cursor: pointer;
+    }
+    .view-toggle { display: flex; gap: 0.2rem; background: #f2f5f9; border-radius: 8px; padding: 0.2rem; }
+    .view-toggle button {
+      background: none;
+      border: none;
+      padding: 0.3rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+    .view-toggle button.active { background: white; color: var(--forest-green); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+
+    /* Employee Cards */
+    .employees-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .employee-card {
+      background: white;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+      transition: box-shadow 0.15s, border-color 0.15s;
+      display: flex;
+      flex-direction: column;
+    }
+    .employee-card:hover { box-shadow: 0 6px 16px rgba(0,0,0,0.05); border-color: #d0dbe8; }
+    .emp-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      margin-bottom: 0.9rem;
+    }
+    .emp-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1rem;
+      color: white;
+      flex-shrink: 0;
+    }
+    .emp-avatar.green { background: var(--forest-green); }
+    .emp-avatar.emerald { background: var(--emerald); }
+    .emp-avatar.amber { background: var(--warning-amber); }
+    .emp-avatar.red { background: var(--critical-red); }
+    .emp-avatar.charcoal { background: var(--charcoal-light); }
+    .emp-info { flex: 1; min-width: 0; }
+    .emp-name { font-weight: 700; font-size: 0.95rem; color: var(--charcoal); margin-bottom: 0.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .emp-role { font-size: 0.75rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.3rem; }
+    .emp-status-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+    .status-active { background: #1f6d4a; }
+    .status-break { background: var(--warning-amber); }
+    .status-off { background: #9aa8b9; }
+    .status-suspended { background: var(--critical-red); }
+
+    .emp-details-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem 0.5rem;
+      margin-bottom: 1rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid #f0f3f7;
+    }
+    .emp-detail-item { font-size: 0.75rem; }
+    .emp-detail-label { color: var(--text-secondary); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 0.1rem; }
+    .emp-detail-value { font-weight: 600; color: var(--charcoal); }
+    .emp-detail-value.warning { color: var(--warning-amber); }
+    .emp-detail-value.danger { color: var(--critical-red); }
+
+    .emp-actions {
+      display: flex;
+      gap: 0.4rem;
+      margin-top: auto;
+      padding-top: 0.5rem;
+      border-top: 1px solid #f0f3f7;
+    }
+    .emp-action-btn {
+      flex: 1;
+      background: #f7f9fc;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 0.35rem 0.3rem;
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: var(--charcoal);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .emp-action-btn:hover { background: #e9f1ed; border-color: var(--emerald); color: var(--forest-green); }
+    .emp-action-btn.danger:hover { background: #fce9e9; border-color: var(--critical-red); color: var(--critical-red); }
+
+    /* Employee Table View */
+    .table-view-card {
+      background: white;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+    }
+    .table-responsive { max-height: 520px; overflow-y: auto; }
+    .table-responsive::-webkit-scrollbar { width: 5px; }
+    .table-responsive::-webkit-scrollbar-thumb { background: #d0d8e3; border-radius: 5px; }
+    .table-emp {
+      font-size: 0.8rem;
+      margin-bottom: 0;
+      width: 100%;
+    }
+    .table-emp th {
+      font-weight: 600;
+      color: #6e7d90;
+      text-transform: uppercase;
+      font-size: 0.65rem;
+      letter-spacing: 0.4px;
+      border-bottom: 1px solid var(--card-border);
+      padding: 0.75rem 1rem;
+      background: #fafcff;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      white-space: nowrap;
+    }
+    .table-emp td {
+      padding: 0.7rem 1rem;
+      vertical-align: middle;
+      border-bottom: 1px solid #f0f3f7;
+      color: var(--charcoal);
+    }
+    .table-emp tbody tr:hover { background: #fafcff; }
+    .badge-status {
+      font-size: 0.65rem;
+      font-weight: 600;
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+      display: inline-block;
+    }
+    .badge-active { background: #e9f1ed; color: #1f6d4a; }
+    .badge-break { background: #fff4e5; color: #a7681a; }
+    .badge-off { background: #eef2f6; color: #4e5e72; }
+    .badge-suspended { background: #fce9e9; color: #a13d3d; }
+    .action-icon-btn {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      padding: 0.2rem 0.4rem;
+      border-radius: 6px;
+    }
+    .action-icon-btn:hover { background: #f0f4f9; color: var(--forest-green); }
+
+    /* Pagination */
+    .pagination-bar {
+      padding: 0.75rem 1.25rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--card-border);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      gap: 0.5rem;
+    }
+    .pagination-btns { display: flex; gap: 0.3rem; }
+    .page-btn {
+      border: 1px solid var(--card-border);
+      background: white;
+      border-radius: 6px;
+      min-width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      color: var(--charcoal);
+      cursor: pointer;
+      padding: 0 0.5rem;
+    }
+    .page-btn:hover { background: #f0f4f9; }
+    .page-btn.active { background: var(--forest-green); color: white; border-color: var(--forest-green); }
+    .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Modal */
+    .modal-content { border-radius: 14px; border: none; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
+    .modal-header { border-bottom: 1px solid var(--card-border); padding: 1rem 1.25rem; }
+    .modal-title { font-size: 1rem; font-weight: 600; }
+    .modal-body { padding: 1.25rem; }
+    .modal-footer { border-top: 1px solid var(--card-border); padding: 0.75rem 1.25rem; }
+    .form-label { font-size: 0.75rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.2rem; }
+    .form-control-sm, .form-select-sm { font-size: 0.8rem; border-radius: 8px; border-color: var(--card-border); }
+    .form-control-sm:focus, .form-select-sm:focus { border-color: var(--emerald); box-shadow: 0 0 0 3px rgba(46,125,94,0.1); }
+    .perm-check-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #f0f3f7;
+      font-size: 0.8rem;
+    }
+    .perm-check-item:last-child { border-bottom: none; }
+    .form-check-input:checked { background-color: var(--forest-green); border-color: var(--forest-green); }
+
+    /* Footer */
+    .app-footer {
+      margin-top: 1.5rem;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--card-border);
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .footer-link { color: var(--emerald); text-decoration: none; font-weight: 500; }
+    .footer-link:hover { text-decoration: underline; }
+
+    /* Mobile */
+    .mobile-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.3);
+      z-index: 1035;
+    }
+    @media (max-width: 991.98px) {
+      .sidebar { transform: translateX(-100%); width: 280px; }
+      .sidebar.show { transform: translateX(0); }
+      .main-content { margin-left: 0 !important; }
+      .mobile-overlay.show { display: block; }
+      .navbar-center { max-width: 100%; order: 3; flex-basis: 100%; margin: 0.4rem 0 0; }
+    }
+    @media (max-width: 575.98px) {
+      .employees-grid { grid-template-columns: 1fr; }
+      .page-title { font-size: 1.2rem; }
+      .employees-content { padding: 1rem 1rem 0; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+    }
+    /* Utility */
+    .d-none-important { display: none !important; }
+    .view-section { transition: opacity 0.15s; }
+  </style>
+</head>
+<body>
+
+  <div class="mobile-overlay" id="mobileOverlay"></div>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="brand-icon"><i class="bi bi-shield-lock-fill"></i></div>
+      <div class="brand-text">StoreGuard<small>Retail intelligence</small></div>
+    </div>
+    <div class="store-selector">
+      <span><i class="bi bi-shop me-1"></i>Accra Central</span>
+      <i class="bi bi-chevron-down"></i>
+    </div>
+    <div class="nav-section">
+      <div class="section-label">Main</div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-grid-1x2-fill"></i><span class="nav-text">Overview</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-upc-scan"></i><span class="nav-text">Point of Sale</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-receipt"></i><span class="nav-text">Sales & Transactions</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-box-seam"></i><span class="nav-text">Inventory</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-arrow-left-right"></i><span class="nav-text">Stock Movements</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-truck"></i><span class="nav-text">Suppliers & Purchases</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link active"><i class="bi bi-people"></i><span class="nav-text">Employees</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-clock-history"></i><span class="nav-text">Shifts & Attendance</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-cash-stack"></i><span class="nav-text">Cash Management</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-wallet2"></i><span class="nav-text">Expenses</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-shield-exclamation"></i><span class="nav-text">Security & Alerts</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-bar-chart-line"></i><span class="nav-text">Reports & Analytics</span></a></div>
+    </div>
+    <div class="nav-section">
+      <div class="section-label">Management</div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-person-lines-fill"></i><span class="nav-text">Customers & Credit</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-check2-square"></i><span class="nav-text">Approvals</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-journal-text"></i><span class="nav-text">Audit Logs</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-phone"></i><span class="nav-text">Device Management</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-gear"></i><span class="nav-text">Settings</span></a></div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="user-profile">
+        <div class="user-avatar">AK</div>
+        <div class="user-details">
+          <div class="user-name">Ama Kusi</div>
+          <div class="user-role">Owner · Admin</div>
+        </div>
+        <i class="bi bi-box-arrow-right ms-auto text-secondary" style="font-size:0.9rem; cursor:pointer;" title="Logout"></i>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content" id="mainContent">
+
+    <!-- TOP NAVBAR -->
+    <nav class="top-navbar">
+      <div class="navbar-left">
+        <button class="sidebar-toggle" id="sidebarToggle"><i class="bi bi-list"></i></button>
+        <div class="breadcrumb-text">Dashboard / <span>Employees</span></div>
+      </div>
+      <div class="navbar-center">
+        <div class="global-search">
+          <i class="bi bi-search"></i>
+          <input type="text" placeholder="Search employees, roles...">
+        </div>
+      </div>
+      <div class="navbar-right">
+        <span class="date-badge"><i class="bi bi-calendar3 me-1"></i>Wed, 15 Apr 2026</span>
+        <div class="connectivity-indicator"><i class="bi bi-wifi"></i> Online</div>
+        <button class="icon-btn" title="Notifications"><i class="bi bi-bell"></i><span class="badge-dot">3</span></button>
+        <div class="dropdown">
+          <button class="profile-dropdown-btn" data-bs-toggle="dropdown">
+            <div class="profile-initials-sm">AK</div>
+            <i class="bi bi-chevron-down" style="font-size:0.7rem;"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>Profile</a></li>
+            <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>Settings</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!-- EMPLOYEES CONTENT -->
+    <div class="employees-content">
+
+      <!-- Page header -->
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Employees</h1>
+          <p class="page-subtitle">Manage staff profiles, roles, permissions and performance.</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn-outline-soft" id="exportEmployeesBtn"><i class="bi bi-download"></i> Export</button>
+          <button class="btn-forest" data-bs-toggle="modal" data-bs-target="#addEmployeeModal"><i class="bi bi-person-plus"></i> Add employee</button>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total employees <i class="bi bi-people text-emerald"></i></div>
+          <div class="stat-value" id="statTotalEmployees">8</div>
+          <div class="stat-sub">Across all roles</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Active now <i class="bi bi-person-check text-emerald"></i></div>
+          <div class="stat-value" id="statActiveNow">4</div>
+          <div class="stat-sub">Currently on shift</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">On break <i class="bi bi-cup-hot text-amber"></i></div>
+          <div class="stat-value text-amber" id="statOnBreak">1</div>
+          <div class="stat-sub">Temporarily away</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Suspended <i class="bi bi-person-x text-red"></i></div>
+          <div class="stat-value text-red" id="statSuspended">1</div>
+          <div class="stat-sub">Access restricted</div>
+        </div>
+      </div>
+
+      <!-- Filters + view toggle -->
+      <div class="filters-bar">
+        <div class="filter-search">
+          <i class="bi bi-search"></i>
+          <input type="text" id="employeeSearch" placeholder="Search by name, role or ID...">
+        </div>
+        <select class="filter-select" id="roleFilter">
+          <option value="all">All roles</option>
+          <option value="Owner">Owner</option>
+          <option value="Manager">Manager</option>
+          <option value="Supervisor">Supervisor</option>
+          <option value="Cashier">Cashier</option>
+          <option value="Stock Clerk">Stock Clerk</option>
+          <option value="Security">Security</option>
+        </select>
+        <select class="filter-select" id="statusFilter">
+          <option value="all">All statuses</option>
+          <option value="Active">Active</option>
+          <option value="Break">On break</option>
+          <option value="Off shift">Off shift</option>
+          <option value="Suspended">Suspended</option>
+        </select>
+        <div class="view-toggle" id="viewToggle">
+          <button class="active" data-view="grid" title="Grid view"><i class="bi bi-grid-3x3-gap-fill"></i></button>
+          <button data-view="table" title="Table view"><i class="bi bi-list-ul"></i></button>
+        </div>
+      </div>
+
+      <!-- GRID VIEW -->
+      <div id="gridView" class="view-section">
+        <div class="employees-grid" id="employeesGrid">
+          <!-- JS rendered cards -->
+        </div>
+      </div>
+
+      <!-- TABLE VIEW (hidden by default) -->
+      <div id="tableView" class="view-section d-none-important">
+        <div class="table-view-card">
+          <div class="table-responsive">
+            <table class="table-emp">
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Shift</th>
+                  <th>Txns today</th>
+                  <th>Sales today</th>
+                  <th>Refunds</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="employeesTableBody">
+                <!-- JS rendered -->
+              </tbody>
+            </table>
+          </div>
+          <div class="pagination-bar">
+            <span id="paginationInfo">Showing 1–8 of 8 employees</span>
+            <div class="pagination-btns">
+              <button class="page-btn" disabled><i class="bi bi-chevron-left"></i></button>
+              <button class="page-btn active">1</button>
+              <button class="page-btn"><i class="bi bi-chevron-right"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <footer class="app-footer">
+        <div>
+          <span class="fw-semibold">StoreGuard</span> — Retail intelligence. Complete accountability. <br>
+          <span style="font-size:0.65rem;">Designed & Developed by <a href="https://nana-kojo.vercel.app" target="_blank" class="footer-link">Nana Kojo</a></span>
+        </div>
+        <div class="text-end">
+          <span>v2.4.0 · © 2026 · All systems operational</span>
+        </div>
+      </footer>
+
+    </div>
+  </div>
+
+  <!-- ADD EMPLOYEE MODAL -->
+  <div class="modal fade" id="addEmployeeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-person-plus me-2 text-forest"></i>Add new employee</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="addEmployeeForm">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Full name</label>
+                <input type="text" class="form-control form-control-sm" id="newEmpName" placeholder="e.g. Kwame Mensah" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Email address</label>
+                <input type="email" class="form-control form-control-sm" id="newEmpEmail" placeholder="name@storeguard.com" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Phone number</label>
+                <input type="tel" class="form-control form-control-sm" id="newEmpPhone" placeholder="+233 24 000 0000">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Employee ID</label>
+                <input type="text" class="form-control form-control-sm" id="newEmpId" placeholder="e.g. EMP-009">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Role</label>
+                <select class="form-select form-select-sm" id="newEmpRole">
+                  <option value="Cashier">Cashier</option>
+                  <option value="Supervisor">Supervisor</option>
+                  <option value="Manager">Manager</option>
+                  <option value="Stock Clerk">Stock Clerk</option>
+                  <option value="Security">Security</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Assigned shift</label>
+                <select class="form-select form-select-sm" id="newEmpShift">
+                  <option value="Morning">Morning (6am – 2pm)</option>
+                  <option value="Afternoon">Afternoon (2pm – 10pm)</option>
+                  <option value="Night">Night (10pm – 6am)</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-600 mb-2">Permissions</label>
+                <div class="row g-2">
+                  <div class="col-md-6">
+                    <div class="perm-check-item"><span>Process sales (POS)</span><div class="form-check form-switch m-0"><input class="form-check-input" type="checkbox" id="permPOS" checked></div></div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="perm-check-item"><span>Issue refunds</span><div class="form-check form-switch m-0"><input class="form-check-input" type="checkbox" id="permRefund"></div></div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="perm-check-item"><span>Apply discounts</span><div class="form-check form-switch m-0"><input class="form-check-input" type="checkbox" id="permDiscount"></div></div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="perm-check-item"><span>Manage inventory</span><div class="form-check form-switch m-0"><input class="form-check-input" type="checkbox" id="permInventory"></div></div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="perm-check-item"><span>View reports</span><div class="form-check form-switch m-0"><input class="form-check-input" type="checkbox" id="permReports" checked></div></div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="perm-check-item"><span>Manage employees</span><div class="form-check form-switch m-0"><input class="form-check-input" type="checkbox" id="permEmployees"></div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-sm btn-forest" id="saveEmployeeBtn"><i class="bi bi-check-lg me-1"></i>Save employee</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDIT EMPLOYEE MODAL -->
+  <div class="modal fade" id="editEmployeeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-pencil-square me-2 text-forest"></i>Edit employee</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editEmployeeForm">
+            <input type="hidden" id="editEmpId">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Full name</label>
+                <input type="text" class="form-control form-control-sm" id="editEmpName" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Email address</label>
+                <input type="email" class="form-control form-control-sm" id="editEmpEmail" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Phone number</label>
+                <input type="tel" class="form-control form-control-sm" id="editEmpPhone">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Employee ID</label>
+                <input type="text" class="form-control form-control-sm" id="editEmpEmpId">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Role</label>
+                <select class="form-select form-select-sm" id="editEmpRole">
+                  <option value="Cashier">Cashier</option>
+                  <option value="Supervisor">Supervisor</option>
+                  <option value="Manager">Manager</option>
+                  <option value="Stock Clerk">Stock Clerk</option>
+                  <option value="Security">Security</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Assigned shift</label>
+                <select class="form-select form-select-sm" id="editEmpShift">
+                  <option value="Morning">Morning (6am – 2pm)</option>
+                  <option value="Afternoon">Afternoon (2pm – 10pm)</option>
+                  <option value="Night">Night (10pm – 6am)</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Status</label>
+                <select class="form-select form-select-sm" id="editEmpStatus">
+                  <option value="Active">Active</option>
+                  <option value="Break">On break</option>
+                  <option value="Off shift">Off shift</option>
+                  <option value="Suspended">Suspended</option>
+                </select>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-sm btn-forest" id="updateEmployeeBtn"><i class="bi bi-check-lg me-1"></i>Update employee</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EMPLOYEE DETAIL MODAL -->
+  <div class="modal fade" id="employeeDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-person-vcard me-2 text-forest"></i>Employee details</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" id="employeeDetailBody">
+          <!-- JS rendered -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-sm btn-forest" id="editFromDetailBtn"><i class="bi bi-pencil me-1"></i>Edit employee</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DELETE CONFIRMATION MODAL -->
+  <div class="modal fade" id="deleteEmployeeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Remove employee</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p class="mb-1" style="font-size:0.85rem;">Are you sure you want to remove <strong id="deleteEmployeeName">this employee</strong>?</p>
+          <p class="text-secondary" style="font-size:0.75rem;">Their account will be deactivated and access revoked.</p>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-sm btn-danger" id="confirmDeleteEmpBtn">Remove</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/storeguard.js"></script>
+  <script>
+    (function() {
+      // ---------- EMPLOYEE DATA ----------
+      let employees = [
+        { id: 'e1', name: 'Ama Kusi', empId: 'EMP-001', email: 'ama.kusi@storeguard.com', phone: '+233 24 111 1111', role: 'Owner', shift: 'Morning', status: 'Active', avatarColor: 'green', initials: 'AK', txns: 0, sales: 0, refunds: 0, joinDate: '2024-01-15', permissions: ['POS', 'Reports', 'Employees'] },
+        { id: 'e2', name: 'Kwame Mensah', empId: 'EMP-002', email: 'kwame.m@storeguard.com', phone: '+233 24 222 2222', role: 'Cashier', shift: 'Morning', status: 'Active', avatarColor: 'emerald', initials: 'KM', txns: 42, sales: 5640, refunds: 2, joinDate: '2024-03-01', permissions: ['POS', 'Reports'] },
+        { id: 'e3', name: 'Efua Boateng', empId: 'EMP-003', email: 'efua.b@storeguard.com', phone: '+233 24 333 3333', role: 'Cashier', shift: 'Morning', status: 'Active', avatarColor: 'amber', initials: 'EB', txns: 38, sales: 4980, refunds: 4, joinDate: '2024-05-10', permissions: ['POS'] },
+        { id: 'e4', name: 'Yaw Darko', empId: 'EMP-004', email: 'yaw.d@storeguard.com', phone: '+233 24 444 4444', role: 'Supervisor', shift: 'Morning', status: 'Active', avatarColor: 'charcoal', initials: 'YD', txns: 12, sales: 2340, refunds: 0, joinDate: '2023-11-20', permissions: ['POS', 'Refund', 'Discount', 'Reports'] },
+        { id: 'e5', name: 'Akosua Adjei', empId: 'EMP-005', email: 'akosua.a@storeguard.com', phone: '+233 24 555 5555', role: 'Cashier', shift: 'Afternoon', status: 'Break', avatarColor: 'red', initials: 'AA', txns: 0, sales: 0, refunds: 0, joinDate: '2025-02-01', permissions: ['POS'] },
+        { id: 'e6', name: 'Kofi Asante', empId: 'EMP-006', email: 'kofi.a@storeguard.com', phone: '+233 24 666 6666', role: 'Stock Clerk', shift: 'Morning', status: 'Active', avatarColor: 'emerald', initials: 'KA', txns: 0, sales: 0, refunds: 0, joinDate: '2024-08-12', permissions: ['Inventory'] },
+        { id: 'e7', name: 'Abena Serwaa', empId: 'EMP-007', email: 'abena.s@storeguard.com', phone: '+233 24 777 7777', role: 'Manager', shift: 'Afternoon', status: 'Off shift', avatarColor: 'green', initials: 'AS', txns: 0, sales: 0, refunds: 0, joinDate: '2023-06-05', permissions: ['POS', 'Refund', 'Discount', 'Inventory', 'Reports', 'Employees'] },
+        { id: 'e8', name: 'Kojo Antwi', empId: 'EMP-008', email: 'kojo.a@storeguard.com', phone: '+233 24 888 8888', role: 'Security', shift: 'Night', status: 'Suspended', avatarColor: 'red', initials: 'KA', txns: 0, sales: 0, refunds: 0, joinDate: '2025-01-03', permissions: [] },
+      ];
+
+      // ---------- STATE ----------
+      let searchTerm = '';
+      let roleFilter = 'all';
+      let statusFilter = 'all';
+      let currentView = 'grid';
+      let employeeToDelete = null;
+      let currentDetailId = null;
+
+      // ---------- DOM REFS ----------
+      const gridView = document.getElementById('gridView');
+      const tableView = document.getElementById('tableView');
+      const employeesGrid = document.getElementById('employeesGrid');
+      const employeesTableBody = document.getElementById('employeesTableBody');
+      const searchInput = document.getElementById('employeeSearch');
+      const roleSelect = document.getElementById('roleFilter');
+      const statusSelect = document.getElementById('statusFilter');
+      const resultCount = document.getElementById('paginationInfo');
+
+      // Stats
+      const statTotalEmployees = document.getElementById('statTotalEmployees');
+      const statActiveNow = document.getElementById('statActiveNow');
+      const statOnBreak = document.getElementById('statOnBreak');
+      const statSuspended = document.getElementById('statSuspended');
+
+      // Modals
+      const addEmployeeModal = new bootstrap.Modal(document.getElementById('addEmployeeModal'));
+      const editEmployeeModal = new bootstrap.Modal(document.getElementById('editEmployeeModal'));
+      const employeeDetailModal = new bootstrap.Modal(document.getElementById('employeeDetailModal'));
+      const deleteEmployeeModal = new bootstrap.Modal(document.getElementById('deleteEmployeeModal'));
+
+      // ---------- HELPERS ----------
+      function getStatusClass(status) {
+        switch(status) {
+          case 'Active': return 'badge-active';
+          case 'Break': return 'badge-break';
+          case 'Off shift': return 'badge-off';
+          case 'Suspended': return 'badge-suspended';
+          default: return 'badge-off';
+        }
+      }
+
+      function getStatusDot(status) {
+        switch(status) {
+          case 'Active': return 'status-active';
+          case 'Break': return 'status-break';
+          case 'Off shift': return 'status-off';
+          case 'Suspended': return 'status-suspended';
+          default: return 'status-off';
+        }
+      }
+
+      function getAvatarColor(color) {
+        return color || 'emerald';
+      }
+
+      function updateStats() {
+        const total = employees.length;
+        const active = employees.filter(e => e.status === 'Active').length;
+        const onBreak = employees.filter(e => e.status === 'Break').length;
+        const suspended = employees.filter(e => e.status === 'Suspended').length;
+        statTotalEmployees.textContent = total;
+        statActiveNow.textContent = active;
+        statOnBreak.textContent = onBreak;
+        statSuspended.textContent = suspended;
+      }
+
+      // ---------- FILTER ----------
+      function getFilteredEmployees() {
+        return employees.filter(e => {
+          if (searchTerm.trim() !== '') {
+            const term = searchTerm.toLowerCase().trim();
+            const match = e.name.toLowerCase().includes(term) ||
+                          e.role.toLowerCase().includes(term) ||
+                          e.empId.toLowerCase().includes(term);
+            if (!match) return false;
+          }
+          if (roleFilter !== 'all' && e.role !== roleFilter) return false;
+          if (statusFilter !== 'all' && e.status !== statusFilter) return false;
+          return true;
+        });
+      }
+
+      // ---------- RENDER GRID ----------
+      function renderGrid() {
+        const filtered = getFilteredEmployees();
+        resultCount.textContent = `Showing 1–${filtered.length} of ${filtered.length} employees`;
+
+        if (filtered.length === 0) {
+          employeesGrid.innerHTML = `<div class="text-center text-secondary py-5" style="grid-column:1/-1;">
+            <i class="bi bi-people fs-2 d-block mb-2 opacity-25"></i>
+            <span style="font-size:0.85rem;">No employees match your filters.</span>
+          </div>`;
+          return;
+        }
+
+        employeesGrid.innerHTML = filtered.map(e => `
+          <div class="employee-card" data-empid="${e.id}">
+            <div class="emp-top">
+              <div class="emp-avatar ${getAvatarColor(e.avatarColor)}">${e.initials}</div>
+              <div class="emp-info">
+                <div class="emp-name">${e.name}</div>
+                <div class="emp-role"><span class="emp-status-dot ${getStatusDot(e.status)}"></span> ${e.role} · ${e.status}</div>
+              </div>
+            </div>
+            <div class="emp-details-grid">
+              <div class="emp-detail-item">
+                <div class="emp-detail-label">Employee ID</div>
+                <div class="emp-detail-value">${e.empId}</div>
+              </div>
+              <div class="emp-detail-item">
+                <div class="emp-detail-label">Shift</div>
+                <div class="emp-detail-value">${e.shift}</div>
+              </div>
+              <div class="emp-detail-item">
+                <div class="emp-detail-label">Txns today</div>
+                <div class="emp-detail-value">${e.txns}</div>
+              </div>
+              <div class="emp-detail-item">
+                <div class="emp-detail-label">Sales today</div>
+                <div class="emp-detail-value">GH₵ ${e.sales.toLocaleString()}</div>
+              </div>
+              <div class="emp-detail-item">
+                <div class="emp-detail-label">Refunds</div>
+                <div class="emp-detail-value ${e.refunds > 2 ? 'warning' : ''}">${e.refunds}</div>
+              </div>
+              <div class="emp-detail-item">
+                <div class="emp-detail-label">Joined</div>
+                <div class="emp-detail-value">${e.joinDate}</div>
+              </div>
+            </div>
+            <div class="emp-actions">
+              <button class="emp-action-btn" data-view-id="${e.id}"><i class="bi bi-eye"></i> View</button>
+              <button class="emp-action-btn" data-edit-id="${e.id}"><i class="bi bi-pencil"></i> Edit</button>
+              <button class="emp-action-btn danger" data-delete-id="${e.id}"><i class="bi bi-trash3"></i></button>
+            </div>
+          </div>
+        `).join('');
+
+        // Attach listeners
+        employeesGrid.querySelectorAll('[data-view-id]').forEach(btn => {
+          btn.addEventListener('click', () => openDetailModal(btn.dataset.viewId));
+        });
+        employeesGrid.querySelectorAll('[data-edit-id]').forEach(btn => {
+          btn.addEventListener('click', () => openEditModal(btn.dataset.editId));
+        });
+        employeesGrid.querySelectorAll('[data-delete-id]').forEach(btn => {
+          btn.addEventListener('click', () => openDeleteModal(btn.dataset.deleteId));
+        });
+      }
+
+      // ---------- RENDER TABLE ----------
+      function renderTable() {
+        const filtered = getFilteredEmployees();
+        resultCount.textContent = `Showing 1–${filtered.length} of ${filtered.length} employees`;
+
+        if (filtered.length === 0) {
+          employeesTableBody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-secondary" style="font-size:0.85rem;">
+            <i class="bi bi-people fs-3 d-block mb-2 opacity-25"></i>No employees match your filters.
+          </td></tr>`;
+          return;
+        }
+
+        employeesTableBody.innerHTML = filtered.map(e => `
+          <tr>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="emp-avatar ${getAvatarColor(e.avatarColor)}" style="width:32px;height:32px;border-radius:8px;font-size:0.7rem;">${e.initials}</div>
+                <div>
+                  <div class="fw-600" style="font-size:0.8rem;">${e.name}</div>
+                  <div style="font-size:0.7rem;color:var(--text-secondary);">${e.empId}</div>
+                </div>
+              </div>
+            </td>
+            <td>${e.role}</td>
+            <td><span class="badge-status ${getStatusClass(e.status)}">${e.status}</span></td>
+            <td>${e.shift}</td>
+            <td>${e.txns}</td>
+            <td class="fw-600">GH₵ ${e.sales.toLocaleString()}</td>
+            <td class="${e.refunds > 2 ? 'text-amber fw-600' : ''}">${e.refunds}</td>
+            <td>
+              <button class="action-icon-btn" title="View" data-view-id="${e.id}"><i class="bi bi-eye"></i></button>
+              <button class="action-icon-btn" title="Edit" data-edit-id="${e.id}"><i class="bi bi-pencil"></i></button>
+              <button class="action-icon-btn" title="Delete" data-delete-id="${e.id}"><i class="bi bi-trash3"></i></button>
+            </td>
+          </tr>
+        `).join('');
+
+        employeesTableBody.querySelectorAll('[data-view-id]').forEach(btn => {
+          btn.addEventListener('click', () => openDetailModal(btn.dataset.viewId));
+        });
+        employeesTableBody.querySelectorAll('[data-edit-id]').forEach(btn => {
+          btn.addEventListener('click', () => openEditModal(btn.dataset.editId));
+        });
+        employeesTableBody.querySelectorAll('[data-delete-id]').forEach(btn => {
+          btn.addEventListener('click', () => openDeleteModal(btn.dataset.deleteId));
+        });
+      }
+
+      // ---------- RENDER ALL ----------
+      function renderAll() {
+        updateStats();
+        if (currentView === 'grid') {
+          gridView.classList.remove('d-none-important');
+          tableView.classList.add('d-none-important');
+          renderGrid();
+        } else {
+          gridView.classList.add('d-none-important');
+          tableView.classList.remove('d-none-important');
+          renderTable();
+        }
+      }
+
+      // ---------- DETAIL ----------
+      function openDetailModal(id) {
+        const e = employees.find(emp => emp.id === id);
+        if (!e) return;
+        currentDetailId = id;
+        const detailBody = document.getElementById('employeeDetailBody');
+        detailBody.innerHTML = `
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="emp-avatar ${getAvatarColor(e.avatarColor)}" style="width:60px;height:60px;border-radius:14px;font-size:1.2rem;">${e.initials}</div>
+            <div>
+              <h6 class="mb-0 fw-bold">${e.name}</h6>
+              <div class="text-secondary" style="font-size:0.8rem;">${e.role} · ${e.empId}</div>
+              <span class="badge-status ${getStatusClass(e.status)} mt-1">${e.status}</span>
+            </div>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <div class="emp-detail-label">Email</div>
+              <div class="emp-detail-value" style="font-size:0.8rem;">${e.email}</div>
+            </div>
+            <div class="col-md-6">
+              <div class="emp-detail-label">Phone</div>
+              <div class="emp-detail-value" style="font-size:0.8rem;">${e.phone}</div>
+            </div>
+            <div class="col-md-6">
+              <div class="emp-detail-label">Shift</div>
+              <div class="emp-detail-value" style="font-size:0.8rem;">${e.shift}</div>
+            </div>
+            <div class="col-md-6">
+              <div class="emp-detail-label">Joined</div>
+              <div class="emp-detail-value" style="font-size:0.8rem;">${e.joinDate}</div>
+            </div>
+          </div>
+          <div class="mb-3">
+            <div class="emp-detail-label mb-1">Today's performance</div>
+            <div class="row g-2">
+              <div class="col-4"><div class="p-2 bg-light rounded text-center"><div class="fw-bold">${e.txns}</div><div style="font-size:0.65rem;color:var(--text-secondary);">Transactions</div></div></div>
+              <div class="col-4"><div class="p-2 bg-light rounded text-center"><div class="fw-bold">GH₵ ${e.sales.toLocaleString()}</div><div style="font-size:0.65rem;color:var(--text-secondary);">Sales</div></div></div>
+              <div class="col-4"><div class="p-2 bg-light rounded text-center"><div class="fw-bold ${e.refunds > 2 ? 'text-amber' : ''}">${e.refunds}</div><div style="font-size:0.65rem;color:var(--text-secondary);">Refunds</div></div></div>
+            </div>
+          </div>
+          <div>
+            <div class="emp-detail-label mb-1">Permissions</div>
+            <div class="d-flex flex-wrap gap-1">
+              ${e.permissions.length > 0 ? e.permissions.map(p => `<span class="badge bg-light text-dark" style="font-size:0.65rem;border:1px solid var(--card-border);">${p}</span>`).join('') : '<span class="text-secondary" style="font-size:0.75rem;">No permissions assigned</span>'}
+            </div>
+          </div>
+        `;
+        employeeDetailModal.show();
+      }
+
+      document.getElementById('editFromDetailBtn').addEventListener('click', () => {
+        employeeDetailModal.hide();
+        if (currentDetailId) openEditModal(currentDetailId);
+      });
+
+      // ---------- EDIT ----------
+      function openEditModal(id) {
+        const e = employees.find(emp => emp.id === id);
+        if (!e) return;
+        document.getElementById('editEmpId').value = e.id;
+        document.getElementById('editEmpName').value = e.name;
+        document.getElementById('editEmpEmail').value = e.email;
+        document.getElementById('editEmpPhone').value = e.phone;
+        document.getElementById('editEmpEmpId').value = e.empId;
+        document.getElementById('editEmpRole').value = e.role;
+        document.getElementById('editEmpShift').value = e.shift;
+        document.getElementById('editEmpStatus').value = e.status;
+        editEmployeeModal.show();
+      }
+
+      document.getElementById('updateEmployeeBtn').addEventListener('click', () => {
+        const id = document.getElementById('editEmpId').value;
+        const e = employees.find(emp => emp.id === id);
+        if (!e) return;
+        e.name = document.getElementById('editEmpName').value.trim() || e.name;
+        e.email = document.getElementById('editEmpEmail').value.trim() || e.email;
+        e.phone = document.getElementById('editEmpPhone').value.trim() || e.phone;
+        e.empId = document.getElementById('editEmpEmpId').value.trim() || e.empId;
+        e.role = document.getElementById('editEmpRole').value;
+        e.shift = document.getElementById('editEmpShift').value;
+        e.status = document.getElementById('editEmpStatus').value;
+        // Update initials if name changed
+        e.initials = e.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+        editEmployeeModal.hide();
+        renderAll();
+      });
+
+      // ---------- DELETE ----------
+      function openDeleteModal(id) {
+        const e = employees.find(emp => emp.id === id);
+        if (!e) return;
+        employeeToDelete = id;
+        document.getElementById('deleteEmployeeName').textContent = e.name;
+        deleteEmployeeModal.show();
+      }
+
+      document.getElementById('confirmDeleteEmpBtn').addEventListener('click', () => {
+        if (!employeeToDelete) return;
+        employees = employees.filter(e => e.id !== employeeToDelete);
+        employeeToDelete = null;
+        deleteEmployeeModal.hide();
+        renderAll();
+      });
+
+      // ---------- ADD ----------
+      document.getElementById('saveEmployeeBtn').addEventListener('click', () => {
+        const name = document.getElementById('newEmpName').value.trim();
+        const email = document.getElementById('newEmpEmail').value.trim();
+        const phone = document.getElementById('newEmpPhone').value.trim();
+        const empId = document.getElementById('newEmpId').value.trim() || `EMP-${String(employees.length + 1).padStart(3, '0')}`;
+        const role = document.getElementById('newEmpRole').value;
+        const shift = document.getElementById('newEmpShift').value;
+
+        if (!name || !email) {
+          alert('Please enter at least a name and email address.');
+          return;
+        }
+
+        const permMap = { permPOS: 'POS', permRefund: 'Refund', permDiscount: 'Discount', permInventory: 'Inventory', permReports: 'Reports', permEmployees: 'Employees' };
+        const permissions = [];
+        Object.keys(permMap).forEach(key => {
+          if (document.getElementById(key).checked) permissions.push(permMap[key]);
+        });
+
+        const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+        const colorOptions = ['green', 'emerald', 'amber', 'red', 'charcoal'];
+        const avatarColor = colorOptions[employees.length % colorOptions.length];
+
+        employees.push({
+          id: 'e' + Date.now(),
+          name, empId, email, phone, role, shift,
+          status: 'Off shift',
+          avatarColor, initials,
+          txns: 0, sales: 0, refunds: 0,
+          joinDate: new Date().toISOString().slice(0, 10),
+          permissions
+        });
+
+        addEmployeeModal.hide();
+        document.getElementById('addEmployeeForm').reset();
+        // Reset permission defaults
+        document.getElementById('permPOS').checked = true;
+        document.getElementById('permReports').checked = true;
+        document.getElementById('permRefund').checked = false;
+        document.getElementById('permDiscount').checked = false;
+        document.getElementById('permInventory').checked = false;
+        document.getElementById('permEmployees').checked = false;
+
+        renderAll();
+      });
+
+      // ---------- VIEW TOGGLE ----------
+      document.getElementById('viewToggle').addEventListener('click', (e) => {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+        document.querySelectorAll('#viewToggle button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentView = btn.dataset.view;
+        renderAll();
+      });
+
+      // ---------- FILTERS ----------
+      searchInput.addEventListener('input', (e) => {
+        searchTerm = e.target.value;
+        renderAll();
+      });
+
+      roleSelect.addEventListener('change', (e) => {
+        roleFilter = e.target.value;
+        renderAll();
+      });
+
+      statusSelect.addEventListener('change', (e) => {
+        statusFilter = e.target.value;
+        renderAll();
+      });
+
+      // ---------- EXPORT ----------
+      document.getElementById('exportEmployeesBtn').addEventListener('click', () => {
+        const filtered = getFilteredEmployees();
+        if (filtered.length === 0) {
+          alert('No employees to export.');
+          return;
+        }
+        const rows = filtered.map(e => ({
+          Name: e.name,
+          'Employee ID': e.empId,
+          Email: e.email,
+          Phone: e.phone,
+          Role: e.role,
+          Shift: e.shift,
+          Status: e.status,
+          'Txns Today': e.txns,
+          'Sales Today': e.sales,
+          'Refunds Today': e.refunds,
+          'Join Date': e.joinDate,
+          Permissions: e.permissions.join('; ')
+        }));
+        const headers = Object.keys(rows[0]);
+        const csv = [
+          headers.join(','),
+          ...rows.map(r => headers.map(h => `"${r[h]}"`).join(','))
+        ].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `storeguard_employees_${new Date().toISOString().slice(0,10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      // ---------- SIDEBAR ----------
+      const sidebar = document.getElementById('sidebar');
+      const mainContent = document.getElementById('mainContent');
+      const sidebarToggle = document.getElementById('sidebarToggle');
+      const mobileOverlay = document.getElementById('mobileOverlay');
+
+      function checkMobile() { return window.innerWidth < 992; }
+
+      sidebarToggle.addEventListener('click', () => {
+        if (checkMobile()) {
+          sidebar.classList.toggle('show');
+          mobileOverlay.classList.toggle('show');
+        } else {
+          sidebar.classList.toggle('collapsed');
+          mainContent.classList.toggle('expanded');
+        }
+      });
+
+      mobileOverlay.addEventListener('click', () => {
+        sidebar.classList.remove('show');
+        mobileOverlay.classList.remove('show');
+      });
+
+      document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+          if (checkMobile()) {
+            sidebar.classList.remove('show');
+            mobileOverlay.classList.remove('show');
+          }
+          document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+          this.classList.add('active');
+        });
+      });
+
+      // ---------- INIT ----------
+      renderAll();
+
+    })();
+  </script>
+</body>
+</html>

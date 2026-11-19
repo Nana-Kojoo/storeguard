@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StoreGuard · Sales & Transactions</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f7f9fc;
+      color: #1e2b3c;
+      overflow-x: hidden;
+    }
+    :root {
+      --forest-green: #0f3d2b;
+      --forest-light: #1b5e3f;
+      --emerald: #2e7d5e;
+      --emerald-muted: #3a8a6e;
+      --charcoal: #1e2b3c;
+      --charcoal-light: #2e3b4e;
+      --off-white: #f7f9fc;
+      --card-border: #e6eaef;
+      --warning-amber: #c77b1a;
+      --critical-red: #b33b3b;
+      --text-secondary: #5f6c7e;
+    }
+
+    /* Sidebar (consistent) */
+    .sidebar {
+      background-color: #ffffff;
+      border-right: 1px solid var(--card-border);
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 280px;
+      transition: transform 0.25s ease, width 0.25s ease;
+      z-index: 1040;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      box-shadow: 2px 0 12px rgba(0,0,0,0.02);
+    }
+    .sidebar.collapsed { width: 80px; }
+    .sidebar.collapsed .nav-text,
+    .sidebar.collapsed .brand-text,
+    .sidebar.collapsed .store-selector,
+    .sidebar.collapsed .user-details,
+    .sidebar.collapsed .section-label { display: none; }
+    .sidebar.collapsed .nav-item i { margin-right: 0; font-size: 1.25rem; }
+    .sidebar.collapsed .nav-link { justify-content: center; padding: 0.7rem 0; }
+    .sidebar-header {
+      padding: 1.25rem 1rem;
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid var(--card-border);
+      min-height: 72px;
+    }
+    .sidebar-header .brand-icon {
+      background: var(--forest-green);
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+    .sidebar-header .brand-text {
+      font-weight: 700;
+      font-size: 1.25rem;
+      color: var(--charcoal);
+      letter-spacing: -0.3px;
+    }
+    .sidebar-header .brand-text small {
+      display: block;
+      font-weight: 400;
+      font-size: 0.65rem;
+      color: var(--text-secondary);
+      letter-spacing: 0.3px;
+    }
+    .store-selector {
+      margin: 0.75rem 1rem;
+      background: #f2f5f9;
+      border-radius: 8px;
+      padding: 0.5rem 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--charcoal);
+      border: 1px solid var(--card-border);
+    }
+    .store-selector i { font-size: 0.9rem; color: var(--emerald); }
+    .nav-section { padding: 0 0.75rem; margin-top: 0.5rem; margin-bottom: 0.25rem; }
+    .section-label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      font-weight: 600;
+      color: #8a97a8;
+      padding-left: 0.75rem;
+      margin: 1rem 0 0.5rem;
+    }
+    .nav-item { margin-bottom: 2px; }
+    .nav-link {
+      display: flex;
+      align-items: center;
+      padding: 0.65rem 0.75rem;
+      border-radius: 8px;
+      color: #3d4b5e;
+      font-size: 0.9rem;
+      font-weight: 500;
+      text-decoration: none;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .nav-link i {
+      font-size: 1.1rem;
+      margin-right: 12px;
+      width: 22px;
+      text-align: center;
+      color: #6e7d90;
+    }
+    .nav-link:hover { background: #f0f4f9; color: var(--forest-green); }
+    .nav-link.active { background: #e9f1ed; color: var(--forest-green); font-weight: 600; }
+    .nav-link.active i { color: var(--forest-green); }
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 1rem 0.75rem;
+      border-top: 1px solid var(--card-border);
+    }
+    .user-profile {
+      display: flex;
+      align-items: center;
+      padding: 0.5rem;
+      border-radius: 8px;
+      background: #f8fafc;
+    }
+    .user-avatar {
+      width: 38px;
+      height: 38px;
+      background: var(--forest-green);
+      color: white;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      margin-right: 10px;
+      flex-shrink: 0;
+    }
+    .user-details .user-name { font-weight: 600; font-size: 0.85rem; }
+    .user-details .user-role { font-size: 0.7rem; color: var(--text-secondary); }
+
+    /* Layout */
+    .main-content {
+      margin-left: 280px;
+      transition: margin-left 0.25s ease;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .main-content.expanded { margin-left: 80px; }
+    .top-navbar {
+      background: #ffffff;
+      border-bottom: 1px solid var(--card-border);
+      padding: 0.6rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 1030;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .navbar-left { display: flex; align-items: center; gap: 1rem; }
+    .sidebar-toggle {
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      color: var(--charcoal);
+      padding: 0.2rem 0.4rem;
+      border-radius: 6px;
+      line-height: 1;
+    }
+    .sidebar-toggle:hover { background: #f0f4f9; }
+    .breadcrumb-text { font-size: 0.9rem; font-weight: 500; color: var(--text-secondary); }
+    .breadcrumb-text span { color: var(--charcoal); font-weight: 600; }
+    .navbar-center { flex: 1; max-width: 420px; margin: 0 1rem; }
+    .global-search {
+      background: #f2f5f9;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 0.45rem 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .global-search i { color: #9aa8b9; font-size: 0.9rem; }
+    .global-search input {
+      border: none;
+      background: transparent;
+      font-size: 0.85rem;
+      width: 100%;
+      outline: none;
+    }
+    .navbar-right { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+    .date-badge {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      background: #f2f5f9;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+    .icon-btn {
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      color: var(--charcoal);
+      position: relative;
+      padding: 0.3rem 0.5rem;
+      border-radius: 8px;
+    }
+    .icon-btn:hover { background: #f0f4f9; }
+    .badge-dot {
+      position: absolute;
+      top: 2px;
+      right: 4px;
+      background: var(--critical-red);
+      color: white;
+      font-size: 0.55rem;
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+    }
+    .connectivity-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.75rem;
+      padding: 0.3rem 0.7rem;
+      border-radius: 20px;
+      background: #eef8f2;
+      color: #1f6d4a;
+      font-weight: 500;
+    }
+    .profile-dropdown-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: none;
+      border: none;
+      padding: 0.2rem 0.5rem;
+      border-radius: 8px;
+    }
+    .profile-dropdown-btn:hover { background: #f0f4f9; }
+    .profile-initials-sm {
+      width: 32px;
+      height: 32px;
+      background: var(--forest-green);
+      color: white;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.8rem;
+    }
+
+    /* Sales page */
+    .sales-content { padding: 1.5rem 1.5rem 0; flex: 1; }
+    .page-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+    .page-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.4px;
+      color: var(--charcoal);
+      margin-bottom: 0.15rem;
+    }
+    .page-subtitle { font-size: 0.9rem; color: var(--text-secondary); }
+    .page-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+    .btn-outline-soft {
+      border: 1px solid var(--card-border);
+      background: white;
+      border-radius: 8px;
+      padding: 0.4rem 0.9rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--charcoal);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .btn-outline-soft:hover { background: #f0f4f9; }
+    .btn-forest {
+      background: var(--forest-green);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 0.4rem 1rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .btn-forest:hover { background: #0c3323; color: white; }
+
+    /* Stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .stat-card {
+      background: white;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1rem 1.1rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    }
+    .stat-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-bottom: 0.3rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .stat-value { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.5px; color: var(--charcoal); }
+    .stat-sub { font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.3rem; }
+    .text-emerald { color: var(--emerald); }
+    .text-amber { color: var(--warning-amber); }
+    .text-red { color: var(--critical-red); }
+    .trend-up { color: #1f6d4a; }
+    .trend-down { color: var(--critical-red); }
+
+    /* Filters */
+    .filters-bar {
+      background: white;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .filter-search {
+      flex: 1;
+      min-width: 200px;
+      background: #f7f9fc;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 0.4rem 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .filter-search i { color: #9aa8b9; font-size: 0.9rem; }
+    .filter-search input {
+      border: none;
+      background: transparent;
+      font-size: 0.8rem;
+      width: 100%;
+      outline: none;
+      font-family: 'Inter', sans-serif;
+    }
+    .filter-select {
+      background: #f7f9fc;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 0.4rem 0.8rem;
+      font-size: 0.8rem;
+      color: var(--charcoal);
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      cursor: pointer;
+    }
+    .filter-date {
+      background: #f7f9fc;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 0.4rem 0.8rem;
+      font-size: 0.8rem;
+      color: var(--charcoal);
+      font-family: 'Inter', sans-serif;
+      outline: none;
+    }
+    .filter-chip-group { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .filter-chip {
+      background: #f2f5f9;
+      border: 1px solid transparent;
+      border-radius: 20px;
+      padding: 0.3rem 0.85rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .filter-chip:hover { background: #e6ecf3; }
+    .filter-chip.active { background: var(--forest-green); color: white; border-color: var(--forest-green); }
+
+    /* Transactions table */
+    .table-card {
+      background: white;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+    }
+    .table-header {
+      padding: 1rem 1.25rem 0.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+    .table-title { font-size: 1rem; font-weight: 600; color: var(--charcoal); }
+    .table-title i { color: var(--emerald); margin-right: 0.4rem; }
+    .table-responsive { max-height: 560px; overflow-y: auto; }
+    .table-responsive::-webkit-scrollbar { width: 5px; }
+    .table-responsive::-webkit-scrollbar-thumb { background: #d0d8e3; border-radius: 5px; }
+    .table-txn {
+      font-size: 0.8rem;
+      margin-bottom: 0;
+      width: 100%;
+    }
+    .table-txn th {
+      font-weight: 600;
+      color: #6e7d90;
+      text-transform: uppercase;
+      font-size: 0.65rem;
+      letter-spacing: 0.4px;
+      border-bottom: 1px solid var(--card-border);
+      padding: 0.75rem 1rem;
+      background: #fafcff;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      white-space: nowrap;
+    }
+    .table-txn td {
+      padding: 0.7rem 1rem;
+      vertical-align: middle;
+      border-bottom: 1px solid #f0f3f7;
+      color: var(--charcoal);
+    }
+    .table-txn tbody tr:hover { background: #fafcff; cursor: pointer; }
+    .txn-id { font-family: monospace; font-size: 0.75rem; font-weight: 600; color: var(--forest-green); }
+    .badge-status {
+      font-size: 0.65rem;
+      font-weight: 600;
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+      display: inline-block;
+      white-space: nowrap;
+    }
+    .badge-completed { background: #e9f1ed; color: #1f6d4a; }
+    .badge-pending { background: #fff4e5; color: #a7681a; }
+    .badge-review { background: #fce9e9; color: #a13d3d; }
+    .badge-refunded { background: #eef2f6; color: #4e5e72; }
+    .badge-reversed { background: #f3e8fd; color: #6b3fa0; }
+    .badge-partial { background: #fff0e5; color: #b86a2e; }
+    .payment-icon-sm {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      margin-right: 0.3rem;
+      vertical-align: middle;
+    }
+    .pay-cash { background: #e9f1ed; color: #1f6d4a; }
+    .pay-momo { background: #fff4e5; color: #a7681a; }
+    .pay-telecel { background: #fce9e9; color: #a13d3d; }
+    .pay-at { background: #eef2f6; color: #4e5e72; }
+    .pay-card { background: #e8eefc; color: #3a5bb0; }
+    .pay-credit { background: #f3e8fd; color: #6b3fa0; }
+
+    .action-icon-btn {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      padding: 0.2rem 0.4rem;
+      border-radius: 6px;
+    }
+    .action-icon-btn:hover { background: #f0f4f9; color: var(--forest-green); }
+
+    /* Pagination */
+    .pagination-bar {
+      padding: 0.75rem 1.25rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--card-border);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      gap: 0.5rem;
+    }
+    .pagination-btns { display: flex; gap: 0.3rem; }
+    .page-btn {
+      border: 1px solid var(--card-border);
+      background: white;
+      border-radius: 6px;
+      min-width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      color: var(--charcoal);
+      cursor: pointer;
+      padding: 0 0.5rem;
+    }
+    .page-btn:hover { background: #f0f4f9; }
+    .page-btn.active { background: var(--forest-green); color: white; border-color: var(--forest-green); }
+    .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Modal */
+    .modal-content { border-radius: 14px; border: none; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
+    .modal-header { border-bottom: 1px solid var(--card-border); padding: 1rem 1.25rem; }
+    .modal-title { font-size: 1rem; font-weight: 600; }
+    .modal-body { padding: 1.25rem; }
+    .modal-footer { border-top: 1px solid var(--card-border); padding: 0.75rem 1.25rem; }
+    .receipt-line { display: flex; justify-content: space-between; font-size: 0.8rem; padding: 0.25rem 0; }
+    .receipt-line.total { font-weight: 700; font-size: 1rem; border-top: 1px dashed #ccd6e0; padding-top: 0.5rem; margin-top: 0.5rem; }
+    .receipt-header-info { font-size: 0.75rem; color: var(--text-secondary); }
+    .detail-row { display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid #f0f3f7; font-size: 0.8rem; }
+    .detail-label { color: var(--text-secondary); }
+    .detail-value { font-weight: 600; color: var(--charcoal); }
+    .detail-section-title {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--text-secondary);
+      margin: 1rem 0 0.5rem;
+    }
+
+    /* Footer */
+    .app-footer {
+      margin-top: 1.5rem;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--card-border);
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .footer-link { color: var(--emerald); text-decoration: none; font-weight: 500; }
+    .footer-link:hover { text-decoration: underline; }
+
+    /* Mobile */
+    .mobile-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.3);
+      z-index: 1035;
+    }
+    @media (max-width: 991.98px) {
+      .sidebar { transform: translateX(-100%); width: 280px; }
+      .sidebar.show { transform: translateX(0); }
+      .main-content { margin-left: 0 !important; }
+      .mobile-overlay.show { display: block; }
+      .navbar-center { max-width: 100%; order: 3; flex-basis: 100%; margin: 0.4rem 0 0; }
+    }
+    @media (max-width: 575.98px) {
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .page-title { font-size: 1.2rem; }
+      .sales-content { padding: 1rem 1rem 0; }
+      .table-txn th, .table-txn td { padding: 0.5rem 0.6rem; font-size: 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="mobile-overlay" id="mobileOverlay"></div>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="brand-icon"><i class="bi bi-shield-lock-fill"></i></div>
+      <div class="brand-text">StoreGuard<small>Retail intelligence</small></div>
+    </div>
+    <div class="store-selector">
+      <span><i class="bi bi-shop me-1"></i>Accra Central</span>
+      <i class="bi bi-chevron-down"></i>
+    </div>
+    <div class="nav-section">
+      <div class="section-label">Main</div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-grid-1x2-fill"></i><span class="nav-text">Overview</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-upc-scan"></i><span class="nav-text">Point of Sale</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link active"><i class="bi bi-receipt"></i><span class="nav-text">Sales & Transactions</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-box-seam"></i><span class="nav-text">Inventory</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-arrow-left-right"></i><span class="nav-text">Stock Movements</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-truck"></i><span class="nav-text">Suppliers & Purchases</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-people"></i><span class="nav-text">Employees</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-clock-history"></i><span class="nav-text">Shifts & Attendance</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-cash-stack"></i><span class="nav-text">Cash Management</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-wallet2"></i><span class="nav-text">Expenses</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-shield-exclamation"></i><span class="nav-text">Security & Alerts</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-bar-chart-line"></i><span class="nav-text">Reports & Analytics</span></a></div>
+    </div>
+    <div class="nav-section">
+      <div class="section-label">Management</div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-person-lines-fill"></i><span class="nav-text">Customers & Credit</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-check2-square"></i><span class="nav-text">Approvals</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-journal-text"></i><span class="nav-text">Audit Logs</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-phone"></i><span class="nav-text">Device Management</span></a></div>
+      <div class="nav-item"><a href="#" class="nav-link"><i class="bi bi-gear"></i><span class="nav-text">Settings</span></a></div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="user-profile">
+        <div class="user-avatar">AK</div>
+        <div class="user-details">
+          <div class="user-name">Ama Kusi</div>
+          <div class="user-role">Owner · Admin</div>
+        </div>
+        <i class="bi bi-box-arrow-right ms-auto text-secondary" style="font-size:0.9rem; cursor:pointer;" title="Logout"></i>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content" id="mainContent">
+
+    <!-- TOP NAVBAR -->
+    <nav class="top-navbar">
+      <div class="navbar-left">
+        <button class="sidebar-toggle" id="sidebarToggle"><i class="bi bi-list"></i></button>
+        <div class="breadcrumb-text">Dashboard / <span>Sales & Transactions</span></div>
+      </div>
+      <div class="navbar-center">
+        <div class="global-search">
+          <i class="bi bi-search"></i>
+          <input type="text" placeholder="Search transactions, cashiers, receipts...">
+        </div>
+      </div>
+      <div class="navbar-right">
+        <span class="date-badge"><i class="bi bi-calendar3 me-1"></i>Wed, 15 Apr 2026</span>
+        <div class="connectivity-indicator"><i class="bi bi-wifi"></i> Online</div>
+        <button class="icon-btn" title="Notifications"><i class="bi bi-bell"></i><span class="badge-dot">3</span></button>
+        <div class="dropdown">
+          <button class="profile-dropdown-btn" data-bs-toggle="dropdown">
+            <div class="profile-initials-sm">AK</div>
+            <i class="bi bi-chevron-down" style="font-size:0.7rem;"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>Profile</a></li>
+            <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>Settings</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!-- SALES CONTENT -->
+    <div class="sales-content">
+
+      <!-- Page header -->
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Sales & Transactions</h1>
+          <p class="page-subtitle">View every sale, payment and refund across your supermarket.</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn-outline-soft" id="exportTxnsBtn"><i class="bi bi-download"></i> Export</button>
+          <button class="btn-outline-soft" id="printReportBtn"><i class="bi bi-printer"></i> Print report</button>
+          <button class="btn-forest" id="newSaleBtn"><i class="bi bi-plus-lg"></i> New sale</button>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Today's revenue <i class="bi bi-currency-exchange text-emerald"></i></div>
+          <div class="stat-value" id="statRevenue">GH₵ 24,850</div>
+          <div class="stat-sub"><span class="trend-up"><i class="bi bi-arrow-up-short"></i> 8.3%</span> vs yesterday</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total transactions <i class="bi bi-receipt text-emerald"></i></div>
+          <div class="stat-value" id="statTxns">186</div>
+          <div class="stat-sub">Avg. GH₵ 133.60 per sale</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Completed <i class="bi bi-check-circle text-emerald"></i></div>
+          <div class="stat-value text-emerald" id="statCompleted">178</div>
+          <div class="stat-sub">95.7% success rate</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Pending sync <i class="bi bi-cloud-slash text-amber"></i></div>
+          <div class="stat-value text-amber" id="statPending">4</div>
+          <div class="stat-sub">Stored locally</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Refunds / reversals <i class="bi bi-arrow-return-left text-red"></i></div>
+          <div class="stat-value text-red" id="statRefunds">2 / 1</div>
+          <div class="stat-sub">GH₵ 340 refunded</div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filters-bar">
+        <div class="filter-search">
+          <i class="bi bi-search"></i>
+          <input type="text" id="txnSearch" placeholder="Search by transaction ID, cashier, or receipt...">
+        </div>
+        <select class="filter-select" id="paymentFilter">
+          <option value="all">All payments</option>
+          <option value="Cash">Cash</option>
+          <option value="MTN MoMo">MTN MoMo</option>
+          <option value="Telecel Cash">Telecel Cash</option>
+          <option value="AT Money">AT Money</option>
+          <option value="Card">Card</option>
+          <option value="Credit">Credit</option>
+        </select>
+        <select class="filter-select" id="statusFilter">
+          <option value="all">All statuses</option>
+          <option value="Completed">Completed</option>
+          <option value="Pending sync">Pending sync</option>
+          <option value="Under review">Under review</option>
+          <option value="Refunded">Refunded</option>
+          <option value="Reversed">Reversed</option>
+        </select>
+        <input type="date" class="filter-date" id="dateFilter" value="2026-04-15">
+        <div class="filter-chip-group">
+          <span class="filter-chip active" data-range="today">Today</span>
+          <span class="filter-chip" data-range="week">This week</span>
+          <span class="filter-chip" data-range="month">This month</span>
+          <span class="filter-chip" data-range="all">All time</span>
+        </div>
+      </div>
+
+      <!-- Transactions table -->
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-title"><i class="bi bi-list-ul"></i> Transaction history <span class="badge bg-light text-dark ms-2" id="resultCount" style="font-size:0.65rem;">186 items</span></div>
+          <div class="d-flex gap-2">
+            <button class="btn-outline-soft" style="font-size:0.7rem; padding:0.25rem 0.6rem;" id="refreshTxnsBtn"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="table-txn">
+            <thead>
+              <tr>
+                <th>Transaction ID</th>
+                <th>Time</th>
+                <th>Cashier</th>
+                <th>Items</th>
+                <th>Payment</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="txnTableBody">
+              <!-- JS rendered -->
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination-bar">
+          <span id="paginationInfo">Showing 1–10 of 186 transactions</span>
+          <div class="pagination-btns">
+            <button class="page-btn" disabled><i class="bi bi-chevron-left"></i></button>
+            <button class="page-btn active">1</button>
+            <button class="page-btn">2</button>
+            <button class="page-btn">3</button>
+            <button class="page-btn">…</button>
+            <button class="page-btn">19</button>
+            <button class="page-btn"><i class="bi bi-chevron-right"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <footer class="app-footer">
+        <div>
+          <span class="fw-semibold">StoreGuard</span> — Retail intelligence. Complete accountability. <br>
+          <span style="font-size:0.65rem;">Designed & Developed by <a href="https://nana-kojo.vercel.app" target="_blank" class="footer-link">Nana Kojo</a></span>
+        </div>
+        <div class="text-end">
+          <span>v2.4.0 · © 2026 · All systems operational</span>
+        </div>
+      </footer>
+
+    </div>
+  </div>
+
+  <!-- TRANSACTION DETAIL MODAL -->
+  <div class="modal fade" id="txnDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-receipt me-2 text-forest"></i>Transaction details</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" id="txnDetailBody">
+          <!-- JS rendered -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-sm btn-outline-soft" id="printReceiptBtn" style="border:1px solid var(--card-border); background:white; border-radius:8px; padding:0.3rem 0.8rem; font-size:0.75rem;"><i class="bi bi-printer me-1"></i>Print receipt</button>
+          <button type="button" class="btn btn-sm btn-forest" id="refundBtn"><i class="bi bi-arrow-return-left me-1"></i>Refund</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REFUND CONFIRMATION MODAL -->
+  <div class="modal fade" id="refundModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title text-danger"><i class="bi bi-arrow-return-left me-2"></i>Process refund</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p class="mb-2" style="font-size:0.85rem;">Refund transaction <strong id="refundTxnId">#TX-0000</strong>?</p>
+          <p class="text-secondary mb-2" style="font-size:0.75rem;">Amount: <strong id="refundAmount">GH₵ 0.00</strong></p>
+          <div class="form-group mb-2">
+            <label class="form-label">Reason for refund</label>
+            <select class="form-select form-select-sm" id="refundReason">
+              <option value="Customer request">Customer request</option>
+              <option value="Damaged product">Damaged product</option>
+              <option value="Wrong item">Wrong item</option>
+              <option value="Duplicate charge">Duplicate charge</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <p class="text-secondary" style="font-size:0.7rem;"><i class="bi bi-info-circle me-1"></i>This action requires manager approval and is logged in the audit trail.</p>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-sm btn-danger" id="confirmRefundBtn">Process refund</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/storeguard.js"></script>
+  <script>
+    (function() {
+      // ---------- TRANSACTION DATA ----------
+      const transactions = [
+        { id: 'TX-8821', time: '09:42', cashier: 'Kwame Mensah', items: 3, payment: 'MTN MoMo', amount: 84.00, status: 'Completed', receipt: '#R-8821', date: '2026-04-15', detailItems: [{ name: 'Rice 5kg', qty: 1, price: 85.00 }, { name: 'Milk 400g', qty: 2, price: 8.50 }] },
+        { id: 'TX-8820', time: '09:38', cashier: 'Efua Boateng', items: 1, payment: 'Cash', amount: 25.50, status: 'Completed', receipt: '#R-8820', date: '2026-04-15', detailItems: [{ name: 'Bread (Large)', qty: 1, price: 7.00 }, { name: 'Eggs (Crate)', qty: 1, price: 42.00 }] },
+        { id: 'TX-8819', time: '09:30', cashier: 'Yaw Darko', items: 6, payment: 'Card', amount: 212.00, status: 'Pending sync', receipt: '#R-8819', date: '2026-04-15', detailItems: [{ name: 'Cooking Oil 1L', qty: 2, price: 32.00 }, { name: 'Nescafé 100g', qty: 2, price: 28.00 }, { name: 'Milo 400g', qty: 1, price: 42.00 }, { name: 'Cereal', qty: 1, price: 35.00 }] },
+        { id: 'TX-8818', time: '09:15', cashier: 'Kwame Mensah', items: 2, payment: 'Cash', amount: 47.00, status: 'Completed', receipt: '#R-8818', date: '2026-04-15', detailItems: [{ name: 'Yoghurt 500ml', qty: 1, price: 16.00 }, { name: 'Coca-Cola 1.5L', qty: 2, price: 10.00 }] },
+        { id: 'TX-8817', time: '09:02', cashier: 'Ama Kusi', items: 4, payment: 'MTN MoMo', amount: 130.00, status: 'Under review', receipt: '#R-8817', date: '2026-04-15', detailItems: [{ name: 'Rice 5kg', qty: 1, price: 85.00 }, { name: 'Omo 500g', qty: 1, price: 18.00 }, { name: 'Key Soap', qty: 2, price: 14.00 }] },
+        { id: 'TX-8816', time: '08:55', cashier: 'Efua Boateng', items: 2, payment: 'Cash', amount: 33.00, status: 'Refunded', receipt: '#R-8816', date: '2026-04-15', detailItems: [{ name: 'Digestive Biscuits', qty: 2, price: 6.50 }, { name: 'Colgate 100g', qty: 1, price: 9.00 }] },
+        { id: 'TX-8815', time: '08:48', cashier: 'Kwame Mensah', items: 8, payment: 'Card', amount: 318.50, status: 'Completed', receipt: '#R-8815', date: '2026-04-15', detailItems: [{ name: 'Pringles', qty: 2, price: 22.00 }, { name: 'Milo 400g', qty: 3, price: 42.00 }, { name: 'Cereal', qty: 1, price: 35.00 }, { name: 'Eggs', qty: 2, price: 42.00 }] },
+        { id: 'TX-8814', time: '08:35', cashier: 'Yaw Darko', items: 1, payment: 'Telecel Cash', amount: 42.00, status: 'Completed', receipt: '#R-8814', date: '2026-04-15', detailItems: [{ name: 'Milo 400g', qty: 1, price: 42.00 }] },
+        { id: 'TX-8813', time: '08:22', cashier: 'Ama Kusi', items: 5, payment: 'Cash', amount: 96.00, status: 'Completed', receipt: '#R-8813', date: '2026-04-15', detailItems: [{ name: 'Rice 5kg', qty: 1, price: 85.00 }, { name: 'Voltic Water', qty: 2, price: 5.00 }] },
+        { id: 'TX-8812', time: '08:10', cashier: 'Efua Boateng', items: 3, payment: 'AT Money', amount: 58.50, status: 'Reversed', receipt: '#R-8812', date: '2026-04-15', detailItems: [{ name: 'Cooking Oil 1L', qty: 1, price: 32.00 }, { name: 'Sugar 1kg', qty: 2, price: 12.50 }] },
+        { id: 'TX-8811', time: '08:02', cashier: 'Kwame Mensah', items: 2, payment: 'Cash', amount: 18.00, status: 'Completed', receipt: '#R-8811', date: '2026-04-15', detailItems: [{ name: 'Omo 500g', qty: 1, price: 18.00 }] },
+        { id: 'TX-8810', time: '07:55', cashier: 'Ama Kusi', items: 1, payment: 'Credit', amount: 85.00, status: 'Pending sync', receipt: '#R-8810', date: '2026-04-15', detailItems: [{ name: 'Rice 5kg', qty: 1, price: 85.00 }] },
+        { id: 'TX-8809', time: '07:48', cashier: 'Yaw Darko', items: 4, payment: 'MTN MoMo', amount: 156.00, status: 'Completed', receipt: '#R-8809', date: '2026-04-15', detailItems: [{ name: 'Eggs (Crate)', qty: 2, price: 42.00 }, { name: 'Cereal', qty: 1, price: 35.00 }, { name: 'Nescafé', qty: 1, price: 28.00 }] },
+        { id: 'TX-8808', time: '07:35', cashier: 'Efua Boateng', items: 2, payment: 'Cash', amount: 24.00, status: 'Completed', receipt: '#R-8808', date: '2026-04-15', detailItems: [{ name: 'Key Soap', qty: 1, price: 14.00 }, { name: 'Colgate', qty: 1, price: 9.00 }] },
+        { id: 'TX-8807', time: '07:20', cashier: 'Kwame Mensah', items: 7, payment: 'Card', amount: 287.00, status: 'Completed', receipt: '#R-8807', date: '2026-04-15', detailItems: [{ name: 'Milo 400g', qty: 2, price: 42.00 }, { name: 'Pringles', qty: 3, price: 22.00 }, { name: 'Rice 5kg', qty: 1, price: 85.00 }] },
+      ];
+
+      // ---------- STATE ----------
+      let searchTerm = '';
+      let paymentFilter = 'all';
+      let statusFilter = 'all';
+      let dateFilter = '2026-04-15';
+      let currentRange = 'today';
+      let currentDetailId = null;
+      let refundTxnId = null;
+
+      // ---------- DOM ----------
+      const txnTableBody = document.getElementById('txnTableBody');
+      const resultCount = document.getElementById('resultCount');
+      const paginationInfo = document.getElementById('paginationInfo');
+      const txnDetailModal = new bootstrap.Modal(document.getElementById('txnDetailModal'));
+      const refundModal = new bootstrap.Modal(document.getElementById('refundModal'));
+
+      // Stats
+      const statRevenue = document.getElementById('statRevenue');
+      const statTxns = document.getElementById('statTxns');
+      const statCompleted = document.getElementById('statCompleted');
+      const statPending = document.getElementById('statPending');
+      const statRefunds = document.getElementById('statRefunds');
+
+      // ---------- HELPERS ----------
+      function getStatusClass(status) {
+        switch(status) {
+          case 'Completed': return 'badge-completed';
+          case 'Pending sync': return 'badge-pending';
+          case 'Under review': return 'badge-review';
+          case 'Refunded': return 'badge-refunded';
+          case 'Reversed': return 'badge-reversed';
+          default: return 'badge-refunded';
+        }
+      }
+
+      function getPaymentClass(payment) {
+        switch(payment) {
+          case 'Cash': return 'pay-cash';
+          case 'MTN MoMo': return 'pay-momo';
+          case 'Telecel Cash': return 'pay-telecel';
+          case 'AT Money': return 'pay-at';
+          case 'Card': return 'pay-card';
+          case 'Credit': return 'pay-credit';
+          default: return 'pay-cash';
+        }
+      }
+
+      function getPaymentIcon(payment) {
+        switch(payment) {
+          case 'Cash': return 'bi-cash-stack';
+          case 'MTN MoMo': return 'bi-phone';
+          case 'Telecel Cash': return 'bi-phone-vibrate';
+          case 'AT Money': return 'bi-phone-flip';
+          case 'Card': return 'bi-credit-card';
+          case 'Credit': return 'bi-journal-check';
+          default: return 'bi-cash';
+        }
+      }
+
+      function updateStats() {
+        const total = transactions.length;
+        const completed = transactions.filter(t => t.status === 'Completed').length;
+        const pending = transactions.filter(t => t.status === 'Pending sync').length;
+        const refunded = transactions.filter(t => t.status === 'Refunded').length;
+        const reversed = transactions.filter(t => t.status === 'Reversed').length;
+        const revenue = transactions.reduce((sum, t) => sum + t.amount, 0);
+
+        statRevenue.textContent = 'GH₵ ' + revenue.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        statTxns.textContent = total;
+        statCompleted.textContent = completed;
+        statPending.textContent = pending;
+        statRefunds.textContent = `${refunded} / ${reversed}`;
+      }
+
+      // ---------- FILTER ----------
+      function getFilteredTransactions() {
+        return transactions.filter(t => {
+          if (searchTerm.trim() !== '') {
+            const term = searchTerm.toLowerCase().trim();
+            const match = t.id.toLowerCase().includes(term) ||
+                          t.cashier.toLowerCase().includes(term) ||
+                          t.receipt.toLowerCase().includes(term);
+            if (!match) return false;
+          }
+          if (paymentFilter !== 'all' && t.payment !== paymentFilter) return false;
+          if (statusFilter !== 'all' && t.status !== statusFilter) return false;
+          return true;
+        });
+      }
+
+      // ---------- RENDER ----------
+      function renderTable() {
+        const filtered = getFilteredTransactions();
+        resultCount.textContent = `${filtered.length} item${filtered.length !== 1 ? 's' : ''}`;
+        paginationInfo.textContent = `Showing 1–${filtered.length} of ${filtered.length} transactions`;
+
+        if (filtered.length === 0) {
+          txnTableBody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-secondary" style="font-size:0.85rem;">
+            <i class="bi bi-receipt fs-3 d-block mb-2 opacity-25"></i>No transactions match your filters.
+          </td></tr>`;
+          return;
+        }
+
+        txnTableBody.innerHTML = filtered.map(t => `
+          <tr data-txn-id="${t.id}">
+            <td><span class="txn-id">${t.id}</span></td>
+            <td>${t.time}</td>
+            <td>${t.cashier}</td>
+            <td>${t.items}</td>
+            <td>
+              <span class="payment-icon-sm ${getPaymentClass(t.payment)}"><i class="bi ${getPaymentIcon(t.payment)}"></i></span>
+              ${t.payment}
+            </td>
+            <td class="fw-600">GH₵ ${t.amount.toFixed(2)}</td>
+            <td><span class="badge-status ${getStatusClass(t.status)}">${t.status}</span></td>
+            <td>
+              <button class="action-icon-btn" title="View" data-view-id="${t.id}"><i class="bi bi-eye"></i></button>
+              <button class="action-icon-btn" title="Refund" data-refund-id="${t.id}"><i class="bi bi-arrow-return-left"></i></button>
+            </td>
+          </tr>
+        `).join('');
+
+        // Row click → detail
+        txnTableBody.querySelectorAll('tr[data-txn-id]').forEach(row => {
+          row.addEventListener('click', (e) => {
+            if (e.target.closest('button')) return;
+            openDetail(row.dataset.txnId);
+          });
+        });
+
+        txnTableBody.querySelectorAll('[data-view-id]').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openDetail(btn.dataset.viewId);
+          });
+        });
+
+        txnTableBody.querySelectorAll('[data-refund-id]').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openRefund(btn.dataset.refundId);
+          });
+        });
+      }
+
+      // ---------- DETAIL ----------
+      function openDetail(id) {
+        const t = transactions.find(txn => txn.id === id);
+        if (!t) return;
+        currentDetailId = id;
+        const body = document.getElementById('txnDetailBody');
+        body.innerHTML = `
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+              <div class="fw-bold" style="font-size:1rem;">${t.id}</div>
+              <div class="receipt-header-info">Receipt ${t.receipt} · ${t.time} · 15 Apr 2026</div>
+            </div>
+            <span class="badge-status ${getStatusClass(t.status)}">${t.status}</span>
+          </div>
+
+          <div class="row g-3 mb-2">
+            <div class="col-md-6">
+              <div class="detail-section-title">Cashier</div>
+              <div class="fw-600">${t.cashier}</div>
+              <div class="text-secondary" style="font-size:0.75rem;">Terminal POS-01</div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-section-title">Payment method</div>
+              <div><span class="payment-icon-sm ${getPaymentClass(t.payment)}"><i class="bi ${getPaymentIcon(t.payment)}"></i></span> ${t.payment}</div>
+            </div>
+          </div>
+
+          <div class="detail-section-title">Items purchased</div>
+          ${t.detailItems.map(item => `
+            <div class="receipt-line">
+              <span>${item.name} × ${item.qty}</span>
+              <span>GH₵ ${(item.price * item.qty).toFixed(2)}</span>
+            </div>
+          `).join('')}
+
+          <div class="receipt-line total">
+            <span>Total</span>
+            <span>GH₵ ${t.amount.toFixed(2)}</span>
+          </div>
+
+          <div class="mt-3 p-2" style="background:#f7f9fc; border-radius:8px;">
+            <div class="d-flex justify-content-between" style="font-size:0.75rem;">
+              <span class="text-secondary">Synchronization</span>
+              <span class="fw-600">${t.status === 'Pending sync' ? '<i class="bi bi-cloud-slash text-warning me-1"></i>Stored locally' : '<i class="bi bi-cloud-check text-success me-1"></i>Synced to cloud'}</span>
+            </div>
+          </div>
+        `;
+        txnDetailModal.show();
+      }
+
+      // ---------- REFUND ----------
+      function openRefund(id) {
+        const t = transactions.find(txn => txn.id === id);
+        if (!t) return;
+        refundTxnId = id;
+        document.getElementById('refundTxnId').textContent = t.id;
+        document.getElementById('refundAmount').textContent = 'GH₵ ' + t.amount.toFixed(2);
+        refundModal.show();
+      }
+
+      document.getElementById('confirmRefundBtn').addEventListener('click', () => {
+        if (!refundTxnId) return;
+        const t = transactions.find(txn => txn.id === refundTxnId);
+        if (t) {
+          t.status = 'Refunded';
+        }
+        refundModal.hide();
+        refundTxnId = null;
+        renderTable();
+        updateStats();
+        alert('Refund processed. The transaction has been marked as refunded and logged in the audit trail.');
+      });
+
+      // ---------- REFUND FROM DETAIL ----------
+      document.getElementById('refundBtn').addEventListener('click', () => {
+        if (!currentDetailId) return;
+        const t = transactions.find(txn => txn.id === currentDetailId);
+        if (!t) return;
+        if (t.status === 'Refunded' || t.status === 'Reversed') {
+          alert('This transaction has already been refunded or reversed.');
+          return;
+        }
+        txnDetailModal.hide();
+        openRefund(currentDetailId);
+      });
+
+      // ---------- PRINT RECEIPT ----------
+      document.getElementById('printReceiptBtn').addEventListener('click', () => {
+        window.print();
+      });
+
+      // ---------- FILTER EVENTS ----------
+      document.getElementById('txnSearch').addEventListener('input', (e) => {
+        searchTerm = e.target.value;
+        renderTable();
+      });
+
+      document.getElementById('paymentFilter').addEventListener('change', (e) => {
+        paymentFilter = e.target.value;
+        renderTable();
+      });
+
+      document.getElementById('statusFilter').addEventListener('change', (e) => {
+        statusFilter = e.target.value;
+        renderTable();
+      });
+
+      document.getElementById('dateFilter').addEventListener('change', (e) => {
+        dateFilter = e.target.value;
+        renderTable();
+      });
+
+      document.querySelectorAll('[data-range]').forEach(chip => {
+        chip.addEventListener('click', () => {
+          document.querySelectorAll('[data-range]').forEach(c => c.classList.remove('active'));
+          chip.classList.add('active');
+          currentRange = chip.dataset.range;
+          // Demo: just re-render (in production, adjust date filter)
+          renderTable();
+        });
+      });
+
+      // ---------- REFRESH ----------
+      document.getElementById('refreshTxnsBtn').addEventListener('click', () => {
+        document.getElementById('txnSearch').value = '';
+        document.getElementById('paymentFilter').value = 'all';
+        document.getElementById('statusFilter').value = 'all';
+        document.querySelectorAll('[data-range]').forEach(c => c.classList.remove('active'));
+        document.querySelector('[data-range="today"]').classList.add('active');
+        searchTerm = '';
+        paymentFilter = 'all';
+        statusFilter = 'all';
+        currentRange = 'today';
+        renderTable();
+        updateStats();
+      });
+
+      // ---------- EXPORT ----------
+      document.getElementById('exportTxnsBtn').addEventListener('click', () => {
+        const filtered = getFilteredTransactions();
+        if (filtered.length === 0) {
+          alert('No transactions to export.');
+          return;
+        }
+        const rows = filtered.map(t => ({
+          'Transaction ID': t.id,
+          Time: t.time,
+          Cashier: t.cashier,
+          Items: t.items,
+          Payment: t.payment,
+          Amount: t.amount.toFixed(2),
+          Status: t.status,
+          Receipt: t.receipt,
+        }));
+        const headers = Object.keys(rows[0]);
+        const csv = [
+          headers.join(','),
+          ...rows.map(r => headers.map(h => `"${r[h]}"`).join(','))
+        ].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `storeguard_transactions_${new Date().toISOString().slice(0,10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      // ---------- PRINT REPORT ----------
+      document.getElementById('printReportBtn').addEventListener('click', () => {
+        window.print();
+      });
+
+      // ---------- NEW SALE ----------
+      document.getElementById('newSaleBtn').addEventListener('click', () => {
+        alert('Navigating to Point of Sale...\n(In production, this would open the POS interface.)');
+      });
+
+      // ---------- SIDEBAR ----------
+      const sidebar = document.getElementById('sidebar');
+      const mainContent = document.getElementById('mainContent');
+      const sidebarToggle = document.getElementById('sidebarToggle');
+      const mobileOverlay = document.getElementById('mobileOverlay');
+
+      function checkMobile() { return window.innerWidth < 992; }
+
+      sidebarToggle.addEventListener('click', () => {
+        if (checkMobile()) {
+          sidebar.classList.toggle('show');
+          mobileOverlay.classList.toggle('show');
+        } else {
+          sidebar.classList.toggle('collapsed');
+          mainContent.classList.toggle('expanded');
+        }
+      });
+
+      mobileOverlay.addEventListener('click', () => {
+        sidebar.classList.remove('show');
+        mobileOverlay.classList.remove('show');
+      });
+
+      document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+          if (checkMobile()) {
+            sidebar.classList.remove('show');
+            mobileOverlay.classList.remove('show');
+          }
+          document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+          this.classList.add('active');
+        });
+      });
+
+      // ---------- INIT ----------
+      updateStats();
+      renderTable();
+
+    })();
+  </script>
+</body>
+</html>
