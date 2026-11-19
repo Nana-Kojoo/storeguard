@@ -229,6 +229,11 @@ body.sidebar-collapsed .sg-user { justify-content: center; background: none; }
 .cell-sub { font-size: .72rem; color: var(--muted); }
 .cell-flex { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .thumb-icon { width: 34px; height: 34px; border-radius: 8px; background: var(--surface-2); display: grid; place-items: center; color: var(--emerald); flex-shrink: 0; }
+.thumb-image, .avatar-image { object-fit: cover; }
+.image-preview-wrap { width: 96px; height: 96px; }
+.image-preview { display: block; width: 96px; height: 96px; border-radius: 12px; object-fit: cover; border: 1px solid var(--border); }
+.avatar-preview { width: 56px; height: 56px; border-radius: 14px; }
+.image-preview-placeholder { width: 96px; height: 96px; border: 1px dashed var(--border); border-radius: 12px; display: grid; place-items: center; color: var(--muted); background: var(--surface-2); font-size: 1.5rem; }
 
 .badge-st { display: inline-flex; align-items: center; gap: 4px; font-size: .68rem; font-weight: 600; padding: 3px 9px; border-radius: 20px; white-space: nowrap; }
 .badge-st.green { background: var(--emerald-wash); color: #1f6d4a; }
@@ -481,8 +486,8 @@ body.pos-body .sg-footer { display: none; }
 /* ------------------------------------------------------------------ print */
 .print-only { display: none; }
 /* Receipt styles live in storeguard.js (RECEIPT_CSS) so preview and printout share them. */
-.receipt-preview { background: #f1f3f6; border-radius: 10px; padding: 16px; max-height: 60vh; overflow-y: auto; }
-.receipt-preview .receipt { padding: 12px; box-shadow: 0 1px 4px rgba(15, 23, 42, .12); }
+.receipt-preview { background: linear-gradient(135deg, #edf3ef 0%, #f7f9f8 100%); border: 1px solid #e1e8e3; border-radius: 14px; padding: 18px; max-height: 60vh; overflow-y: auto; }
+.receipt-preview .receipt { box-shadow: 0 14px 32px rgba(23, 33, 27, .12); }
 .logo-box { width: 120px; height: 72px; border: 1px dashed var(--border); border-radius: 10px; display: grid; place-items: center; background: #fff; overflow: hidden; font-size: 1.6rem; }
 .logo-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
 @media print {

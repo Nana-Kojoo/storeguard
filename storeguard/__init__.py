@@ -120,6 +120,8 @@ def create_app(test_config=None):
 # Columns added after the first release. create_all() never alters existing tables, so add them here.
 _LATE_COLUMNS = {
     "business": {"receipt_settings": "TEXT NOT NULL DEFAULT '{}'"},
+    "user": {"image": "TEXT NOT NULL DEFAULT ''"},
+    "product": {"image": "TEXT NOT NULL DEFAULT ''"},
 }
 
 

@@ -1,5 +1,6 @@
 from datetime import date, datetime, time, timedelta, timezone
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
+import re
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from flask import jsonify, request
@@ -96,6 +97,19 @@ def to_text(value, field="value", max_length=255, required=False):
     if len(text) > max_length:
         raise ApiError(f"{field.replace('_', ' ').capitalize()} must be at most {max_length} characters")
     return text
+
+
+IMAGE_PATTERN = re.compile(r"^data:image/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/]+={0,2}$")
+MAX_IMAGE_CHARS = 180_000
+
+
+def clean_image(value, field="image"):
+    image = "" if value is None else str(value).strip()
+    if not image:
+        return ""
+    if len(image) > MAX_IMAGE_CHARS or not IMAGE_PATTERN.match(image):
+        raise ApiError(f"{field.replace('_', ' ').capitalize()} must be a PNG, JPEG, WebP or GIF under 150 KB")
+    return image
 
 
 def to_date(value, field="date", allow_none=True):

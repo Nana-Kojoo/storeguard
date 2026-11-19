@@ -121,7 +121,7 @@
       const left = p.stock_quantity - inCart;
       const cls = left <= 0 ? 'out' : left <= p.reorder_level ? 'low' : '';
       return html`<button type="button" class="product-tile" data-id="${p.id}" ${left <= 0 ? SG.raw('disabled') : ''} title="${p.name}">
-        <span class="thumb-icon"><i class="bi ${SG.CATEGORY_ICONS[p.category] || 'bi-box'}"></i></span>
+        ${p.image ? html`<img class="thumb-icon thumb-image" src="${p.image}" alt="">` : html`<span class="thumb-icon"><i class="bi ${SG.CATEGORY_ICONS[p.category] || 'bi-box'}"></i></span>`}
         <span class="nm">${p.name}</span><span class="pr">${money(p.price)}</span>
         <span class="stk ${cls}">${left <= 0 ? 'Out of stock' : `${left} in stock`}</span></button>`;
     })}`);

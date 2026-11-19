@@ -38,7 +38,7 @@
     onRowClick: p => history(p),
     onAction: (action, p) => ({ edit: () => editProduct(p), restock: () => restock(p), adjust: () => adjust(p), decrease: () => adjust(p, { reason: 'count_correction', quantity: -1 }), archive: () => archive(p), history: () => history(p) })[action](),
     columns: [
-      { key: 'name', label: 'Product', sortable: true, render: p => html`<div class="cell-flex"><span class="thumb-icon"><i class="bi ${SG.CATEGORY_ICONS[p.category] || 'bi-box'}"></i></span><div class="min-w-0"><div class="cell-main text-truncate">${p.name}</div><div class="cell-sub mono">${p.sku}${p.barcode ? ` · ${p.barcode}` : ''}</div></div></div>` },
+      { key: 'name', label: 'Product', sortable: true, render: p => html`<div class="cell-flex">${p.image ? html`<img class="thumb-icon thumb-image" src="${p.image}" alt="">` : html`<span class="thumb-icon"><i class="bi ${SG.CATEGORY_ICONS[p.category] || 'bi-box'}"></i></span>`}<div class="min-w-0"><div class="cell-main text-truncate">${p.name}</div><div class="cell-sub mono">${p.sku}${p.barcode ? ` · ${p.barcode}` : ''}</div></div></div>` },
       { key: 'category', label: 'Category', className: 'hide-md', sortable: true, render: p => SG.titleCase(p.category) },
       { key: 'price', label: 'Price', className: 'num', sortable: true, sortValue: p => SG.toNumber(p.price), render: p => money(p.price) },
       { key: 'cost_price', label: 'Cost', className: 'num hide-md', sortable: true, sortValue: p => SG.toNumber(p.cost_price), render: p => html`${money(p.cost_price)}<div class="cell-sub">${marginPct(p)} margin</div>` },
@@ -93,6 +93,7 @@
   function productFields(p) {
     const cats = [...new Set(DEFAULT_CATS.concat(products.map(x => x.category)))].sort();
     return [
+      { name: 'image', label: 'Product image', type: 'image', col: 12, help: 'PNG, JPEG, WebP or GIF. The image is resized automatically.' },
       { name: 'name', label: 'Product name', required: true, maxlength: 160, placeholder: 'e.g. Rice 5kg (Royal)' },
       { name: 'sku', label: 'SKU', required: true, col: 6, maxlength: 80, placeholder: 'e.g. RIC-5K-001' },
       { name: 'barcode', label: 'Barcode', col: 6, maxlength: 80, placeholder: 'Scan or type' },

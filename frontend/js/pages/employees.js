@@ -30,7 +30,7 @@
   const table = new SG.Table(document.getElementById('table'), {
     rows: [], pageSize: 15, onRowClick: e => detail(e.id),
     columns: [
-      { key: 'name', label: 'Employee', sortable: true, render: e => html`<div class="cell-flex"><span class="sg-avatar sm">${e.initials}</span><div><div class="cell-main">${e.name}</div><div class="cell-sub">${e.employee_code} · ${e.email}</div></div></div>` },
+      { key: 'name', label: 'Employee', sortable: true, render: e => html`<div class="cell-flex">${e.image ? html`<img class="sg-avatar sm avatar-image" src="${e.image}" alt="">` : html`<span class="sg-avatar sm">${e.initials}</span>`}<div><div class="cell-main">${e.name}</div><div class="cell-sub">${e.employee_code} · ${e.email}</div></div></div>` },
       { key: 'role', label: 'Role', sortable: true, render: e => e.role_label },
       { key: 'status', label: 'Status', sortable: true, render: e => SG.badge(e.status, statusLabel[e.status]) },
       { key: 'shift_pattern', label: 'Shift', render: e => SG.titleCase(e.shift_pattern) },
@@ -56,7 +56,7 @@
       <div class="stat-card"><div class="stat-label">Suspended <i class="bi bi-person-x"></i></div><div class="stat-value text-red">${es.filter(e => e.status === 'suspended').length}</div><div class="stat-sub">Cannot sign in</div></div>`);
     table.setRows(list);
     setHTML(document.getElementById('gridView'), list.length ? html`${list.map(e => html`<div class="emp-card" data-id="${e.id}" tabindex="0" role="button" aria-label="${e.name}">
-      <div class="d-flex align-items-center gap-3"><span class="sg-avatar">${e.initials}</span><div class="min-w-0 flex-grow-1"><div class="fw-600 text-truncate">${e.name}</div><div class="small-xs text-muted-sg">${e.role_label} · ${e.employee_code}</div></div>${SG.badge(e.status, statusLabel[e.status])}</div>
+      <div class="d-flex align-items-center gap-3">${e.image ? html`<img class="sg-avatar avatar-image" src="${e.image}" alt="">` : html`<span class="sg-avatar">${e.initials}</span>`}<div class="min-w-0 flex-grow-1"><div class="fw-600 text-truncate">${e.name}</div><div class="small-xs text-muted-sg">${e.role_label} · ${e.employee_code}</div></div>${SG.badge(e.status, statusLabel[e.status])}</div>
       <div class="small-xs text-muted-sg mt-2"><i class="bi bi-envelope me-1"></i>${e.email}${e.phone ? html`<br><i class="bi bi-telephone me-1"></i>${e.phone}` : ''}</div>
       <div class="emp-stats"><div><div class="v">${e.txns_today}</div><div class="k">Txns</div></div><div><div class="v">${SG.moneyCompact(e.sales_today)}</div><div class="k">Sales</div></div><div><div class="v ${e.refunds_today >= 3 ? 'text-red' : ''}">${e.refunds_today}</div><div class="k">Refunds</div></div></div></div>`)}`
       : html`<div class="card-sg" style="grid-column:1/-1"><div class="empty-state"><i class="bi bi-people"></i><div class="title">No employees match</div></div></div>`);
@@ -89,6 +89,7 @@
     if (!data.assignable_roles.length) { SG.toast('Only owners and managers can add employees.', 'warning'); return; }
     const m = SG.formModal({ title: 'Add employee', icon: 'bi-person-plus', size: 'lg', submitText: 'Create account',
       fields: [
+        { name: 'image', label: 'Profile photo', type: 'image', col: 12 },
         { name: 'full_name', label: 'Full name', required: true, col: 6 }, { name: 'email', label: 'Email (used to sign in)', type: 'email', required: true, col: 6 },
         { name: 'phone', label: 'Phone', type: 'tel', col: 6 }, { name: 'employee_code', label: 'Employee ID', col: 6, placeholder: 'Auto-generated if blank' },
         { name: 'role', label: 'Role', type: 'select', options: roleOptions(), col: 6, default: 'cashier' }, { name: 'shift_pattern', label: 'Usual shift', type: 'select', options: SHIFTS, col: 6 },
@@ -105,6 +106,7 @@
     const self = e.id === session.user.id;
     const m = SG.formModal({ title: `Edit ${e.name}`, icon: 'bi-pencil-square', size: 'lg',
       fields: [
+        { name: 'image', label: 'Profile photo', type: 'image', col: 12 },
         { name: 'full_name', label: 'Full name', required: true, col: 6 }, { name: 'email', label: 'Email', type: 'email', required: true, col: 6 },
         { name: 'phone', label: 'Phone', type: 'tel', col: 6 }, { name: 'employee_code', label: 'Employee ID', col: 6 },
         { name: 'role', label: 'Role', type: 'select', options: roleOptions(e.role), col: 6, disabled: self || e.role === 'owner' }, { name: 'shift_pattern', label: 'Usual shift', type: 'select', options: SHIFTS, col: 6 },
@@ -112,7 +114,7 @@
       ].filter(Boolean),
       values: { ...e, full_name: e.name },
       onSubmit: async (v, modalRef) => {
-        const body = { full_name: v.full_name, email: v.email, phone: v.phone, employee_code: v.employee_code, shift_pattern: v.shift_pattern };
+        const body = { full_name: v.full_name, email: v.email, phone: v.phone, employee_code: v.employee_code, shift_pattern: v.shift_pattern, image: v.image };
         if (!self && e.role !== 'owner') { body.role = v.role; body.permissions = readPerms(modalRef); }
         await SG.api.patch(`/employees/${e.id}`, body); SG.ok('Employee updated.'); load();
       } });
@@ -131,7 +133,7 @@
     const listed = data.employees.find(x => x.id === id) || e;
     const self = e.id === session.user.id;
     const m = SG.modal({ title: e.name, icon: 'bi-person-vcard', size: 'xl',
-      body: html`<div class="d-flex flex-wrap gap-3 align-items-center mb-3"><span class="sg-avatar lg">${e.initials}</span><div><div class="fs-5 fw-bold">${e.name}</div><div class="small text-muted-sg">${e.role_label} · ${e.employee_code} · ${e.email}${e.phone ? ` · ${e.phone}` : ''}</div>
+      body: html`<div class="d-flex flex-wrap gap-3 align-items-center mb-3">${e.image ? html`<img class="sg-avatar lg avatar-image" src="${e.image}" alt="">` : html`<span class="sg-avatar lg">${e.initials}</span>`}<div><div class="fs-5 fw-bold">${e.name}</div><div class="small text-muted-sg">${e.role_label} · ${e.employee_code} · ${e.email}${e.phone ? ` · ${e.phone}` : ''}</div>
         <div class="mt-1">${SG.badge(listed.status || (e.active ? 'active' : 'suspended'), statusLabel[listed.status] || (e.active ? 'Active' : 'Suspended'))} <span class="small text-muted-sg ms-2">Last sign-in ${e.last_login_at ? SG.fmtDateTime(e.last_login_at) : 'never'}</span></div></div></div>
         <div class="stats-grid">
           <div class="stat-card"><div class="stat-label">Sales · 30d</div><div class="stat-value">${money(s.sales)}</div><div class="stat-sub">${int(s.txns)} transactions</div></div>

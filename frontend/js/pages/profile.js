@@ -11,8 +11,9 @@
   setHTML(main, html`
     <div class="page-header"><div><h1 class="page-title">My Profile</h1><p class="page-subtitle">Your account details and password.</p></div></div>
     <div class="row grid-gap">
-      <div class="col-lg-5"><div class="card-sg h-100"><div class="d-flex align-items-center gap-3 mb-3"><span class="sg-avatar lg">${u.initials}</span><div><div class="fs-5 fw-bold">${u.name}</div><div class="small text-muted-sg">${session.role_label} · ${u.employee_code || ''}</div><div class="small text-muted-sg">${session.business.name}</div></div></div>
+      <div class="col-lg-5"><div class="card-sg h-100"><div class="d-flex align-items-center gap-3 mb-3" id="profileIdentity">${u.image ? html`<img class="sg-avatar lg avatar-image" src="${u.image}" alt="">` : html`<span class="sg-avatar lg">${u.initials}</span>`}<div><div class="fs-5 fw-bold">${u.name}</div><div class="small text-muted-sg">${session.role_label} · ${u.employee_code || ''}</div><div class="small text-muted-sg">${session.business.name}</div></div></div>
         <form id="profileForm" novalidate>
+          <div class="mb-3"><label class="form-label" for="profileImage">Profile photo</label><div class="d-flex align-items-center gap-3"><div id="profileImagePreview">${u.image ? html`<img class="image-preview avatar-preview" src="${u.image}" alt="">` : html`<span class="sg-avatar lg">${u.initials}</span>`}</div><div class="flex-grow-1"><input class="form-control" id="profileImage" type="file" accept="image/png,image/jpeg,image/webp,image/gif">${u.image ? html`<button type="button" class="btn-sg btn-soft sm mt-2" id="removeProfileImage">Remove photo</button>` : ''}</div></div><div class="form-text">PNG, JPEG, WebP or GIF.</div></div>
           <div class="mb-3"><label class="form-label" for="full_name">Full name</label><input class="form-control" id="full_name" value="${u.name}" maxlength="160" required></div>
           <div class="mb-3"><label class="form-label" for="phone">Phone</label><input class="form-control" id="phone" type="tel" value="${u.phone}" maxlength="40"></div>
           <div class="mb-3"><label class="form-label">Email</label><input class="form-control" value="${u.email}" disabled><div class="form-text">Ask your manager to change your sign-in email.</div></div>
@@ -35,8 +36,39 @@
   document.getElementById('profileForm').addEventListener('submit', async e => {
     e.preventDefault();
     const btn = e.target.querySelector('button'); SG.busy(btn, true, 'Saving…');
-    try { await SG.api.patch('/auth/me', { full_name: document.getElementById('full_name').value.trim(), phone: document.getElementById('phone').value.trim() }); SG.ok('Profile updated.'); }
+    try {
+      let image;
+      const file = document.getElementById('profileImage').files[0];
+      if (file) {
+        image = document.getElementById('profileImage').dataset.pending;
+        if (!image) image = await SG.resizeImage(file);
+      }
+      const payload = { full_name: document.getElementById('full_name').value.trim(), phone: document.getElementById('phone').value.trim() };
+      if (image !== undefined) payload.image = image;
+      const data = await SG.api.patch('/auth/me', payload);
+      u.name = data.user.name; u.phone = data.user.phone; u.image = data.user.image;
+      SG.ok('Profile updated.');
+    }
     catch (err) { SG.fail(err); } finally { SG.busy(btn, false); }
+  });
+  document.getElementById('profileImage').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const image = await SG.resizeImage(file);
+      setHTML(document.getElementById('profileImagePreview'), html`<img class="image-preview avatar-preview" src="${image}" alt="">`);
+      document.getElementById('profileImage').dataset.pending = image;
+    } catch (err) { SG.fail(err); e.target.value = ''; }
+  });
+  document.getElementById('removeProfileImage')?.addEventListener('click', async () => {
+    try {
+      const data = await SG.api.patch('/auth/me', { image: '' });
+      u.image = data.user.image;
+      setHTML(document.getElementById('profileImagePreview'), html`<span class="sg-avatar lg">${u.initials}</span>`);
+      document.getElementById('profileImage').value = '';
+      document.getElementById('removeProfileImage').remove();
+      SG.ok('Profile photo removed.');
+    } catch (err) { SG.fail(err); }
   });
   document.getElementById('pwForm').addEventListener('submit', async e => {
     e.preventDefault();

@@ -7,7 +7,7 @@ from sqlalchemy import or_
 from ..extensions import db
 from ..models import Product, PurchaseItem, PurchaseOrder, StockMovement, Supplier, utcnow
 from ..security import has_permission, login_required, permission_required
-from ..utils import (ApiError, audit, body, date_range_from_args, day_bounds, like, local_today, paginate,
+from ..utils import (ApiError, audit, body, clean_image, date_range_from_args, day_bounds, like, local_today, paginate,
                      raise_alert, to_date, to_int, to_money, to_text)
 from . import api_bp
 
@@ -52,6 +52,8 @@ def check_low_stock(user, product):
 
 
 def apply_product_fields(product, payload, user, creating=False):
+    if "image" in payload:
+        product.image = clean_image(payload.get("image"))
     if creating or "name" in payload:
         product.name = to_text(payload.get("name"), "name", 160, required=True)
     if creating or "sku" in payload:

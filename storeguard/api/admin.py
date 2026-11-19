@@ -13,8 +13,8 @@ from ..models import (Alert, Approval, AuditLog, Customer, Device, Expense, Prod
                       User, money_str, utcnow)
 from ..security import (ALL_PERMISSIONS, ASSIGNABLE_ROLES, ROLE_DEFAULTS, ROLES, client_ip, has_permission,
                         limiter, login_required, permission_required)
-from ..utils import (ApiError, audit, body, canonical_method, date_range_from_args, day_bounds, dec, like, local_today,
-                     paginate, to_bool, to_int, to_local, to_money, to_text)
+from ..utils import (ApiError, audit, body, canonical_method, clean_image, date_range_from_args, day_bounds, dec, like,
+                     local_today, paginate, to_bool, to_int, to_local, to_money, to_text)
 from . import api_bp
 from .operations import serialize_shift, shift_totals
 from .sales import execute_refund
@@ -106,6 +106,8 @@ def employee_detail(user, employee_id):
 
 
 def apply_employee_fields(actor, employee, payload, creating=False):
+    if "image" in payload:
+        employee.image = clean_image(payload.get("image"))
     if creating or "full_name" in payload:
         employee.full_name = to_text(payload.get("full_name"), "full_name", 160, required=True)
     if creating or "email" in payload:

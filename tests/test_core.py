@@ -89,6 +89,37 @@ def test_duplicate_sku_and_stock_adjustment(owner):
     assert moves[0]["movement_type"] == "damaged" and moves[0]["quantity"] == -3
 
 
+def test_profile_and_product_images_can_be_saved(owner):
+    image = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAF/gJ/l21eXQAAAABJRU5ErkJggg=="
+    r = owner.patch("/auth/me", {"image": image})
+    assert r.status_code == 200
+    assert r.get_json()["user"]["image"] == image
+
+    r = owner.post("/products", {"name": "Imaged product", "sku": "IMG-1", "price": 5, "image": image})
+    assert r.status_code == 201
+    product = r.get_json()["product"]
+    assert product["image"] == image
+    r = owner.patch(f"/products/{product['id']}", {"image": ""})
+    assert r.status_code == 200
+    assert r.get_json()["product"]["image"] == ""
+
+
+def test_profile_image_rejects_invalid_data(owner):
+    r = owner.patch("/auth/me", {"image": "https://example.com/avatar.png"})
+    assert r.status_code == 400
+
+
+def test_employee_image_can_be_saved(owner):
+    image = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAF/gJ/l21eXQAAAABJRU5ErkJggg=="
+    r = owner.post("/employees", {
+        "full_name": "Photo Staff", "email": "photo@example.com", "role": "cashier",
+        "password": "temporary pass 123", "image": image,
+    })
+    assert r.status_code == 201
+    employee = r.get_json()["employee"]
+    assert employee["image"] == image
+
+
 def test_business_data_is_tenant_scoped(owner):
     make_product(owner, sku="OWN-1")
     owner.logout()

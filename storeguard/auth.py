@@ -7,7 +7,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from .extensions import db
 from .models import Branch, Business, User, utcnow
 from .security import ROLES, client_ip, csrf_token, current_user, limiter, login_required, login_user
-from .utils import ApiError, audit, body, raise_alert, to_text
+from .utils import ApiError, audit, body, clean_image, raise_alert, to_text
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -143,6 +143,8 @@ def update_me(user):
         user.full_name = to_text(payload["full_name"], "full_name", 160, required=True)
     if "phone" in payload:
         user.phone = to_text(payload["phone"], "phone", 40)
+    if "image" in payload:
+        user.image = clean_image(payload.get("image"))
     audit(user, "user.profile_updated", "user", user.id, "Updated own profile")
     db.session.commit()
     return jsonify(session_payload(user))

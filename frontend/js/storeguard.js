@@ -239,6 +239,34 @@
     });
   }
 
+  function shrinkImage(file) {
+    return new Promise((resolve, reject) => {
+      if (!/^image\/(png|jpeg|webp|gif)$/.test(file.type)) {
+        reject(new Error('Choose a PNG, JPEG, WebP or GIF image.'));
+        return;
+      }
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error('Could not read that image.'));
+      reader.onload = () => {
+        const image = new Image();
+        image.onerror = () => reject(new Error('That image could not be loaded.'));
+        image.onload = () => {
+          const scale = Math.min(1, 640 / image.width, 640 / image.height);
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.max(1, Math.round(image.width * scale));
+          canvas.height = Math.max(1, Math.round(image.height * scale));
+          const context = canvas.getContext('2d');
+          context.drawImage(image, 0, 0, canvas.width, canvas.height);
+          const output = canvas.toDataURL('image/jpeg', 0.82);
+          if (output.length > 180000) reject(new Error('Image is too detailed — choose a smaller or simpler image.'));
+          else resolve(output);
+        };
+        image.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
   function fieldControl(f, value) {
     const id = `f_${f.name}`;
     const common = html`id="${id}" name="${f.name}" ${f.required ? raw('required') : ''} ${f.disabled ? raw('disabled') : ''}`;
@@ -257,6 +285,14 @@
         return html`<div class="input-group"><span class="input-group-text">${currencySymbol()}</span><input class="form-control" type="number" step="0.01" min="${f.min ?? 0}" ${common} value="${v}" placeholder="${f.placeholder || '0.00'}"></div>`;
       case 'html':
         return f.html;
+      case 'image':
+        return html`<div class="image-upload-field" data-image-field="${f.name}">
+          <div class="image-preview-wrap">${value ? html`<img class="image-preview" src="${value}" alt="">` : html`<div class="image-preview-placeholder"><i class="bi bi-image"></i></div>`}</div>
+          <div class="d-flex align-items-center gap-2 mt-2">
+            <input class="form-control form-control-sm" type="file" accept="image/png,image/jpeg,image/webp,image/gif" id="${id}" name="${f.name}">
+            ${value ? html`<button type="button" class="btn-sg btn-soft sm" data-image-remove="${f.name}">Remove</button>` : ''}
+          </div>
+        </div>`;
       default:
         return html`<input class="form-control" type="${f.type || 'text'}" ${common} value="${v}" placeholder="${f.placeholder || ''}"
           ${f.min !== undefined ? html`min="${f.min}"` : ''} ${f.max !== undefined && f.type === 'number' ? html`max="${f.max}"` : ''}
@@ -282,17 +318,41 @@
     const form = m.el.querySelector('form');
     const errorBox = m.el.querySelector('[data-error]');
     const submitBtn = m.el.querySelector('[data-submit]');
-    const collect = () => {
+    const collect = async () => {
       const out = {};
-      fields.forEach(f => {
-        if (f.type === 'html') return;
-        if (f.type === 'hidden') { out[f.name] = values[f.name]; return; }
+      for (const f of fields) {
+        if (f.type === 'html') continue;
+        if (f.type === 'hidden') { out[f.name] = values[f.name]; continue; }
         const input = form.elements[f.name];
         if (!input) return;
-        out[f.name] = f.type === 'checkbox' ? input.checked : (typeof input.value === 'string' ? input.value.trim() : input.value);
-      });
+        if (f.type === 'image') {
+          const box = form.querySelector(`[data-image-field="${f.name}"]`);
+          if (input.files && input.files[0]) out[f.name] = await shrinkImage(input.files[0]);
+          else out[f.name] = box.dataset.removed === '1' ? '' : (values[f.name] || '');
+        } else {
+          out[f.name] = f.type === 'checkbox' ? input.checked : (typeof input.value === 'string' ? input.value.trim() : input.value);
+        }
+      }
       return out;
     };
+    m.el.querySelectorAll('[data-image-remove]').forEach(button => button.addEventListener('click', () => {
+      const field = button.dataset.imageRemove;
+      const box = m.el.querySelector(`[data-image-field="${field}"]`);
+      box.dataset.removed = '1';
+      setHTML(box.querySelector('.image-preview-wrap'), html`<div class="image-preview-placeholder"><i class="bi bi-image"></i></div>`);
+      const input = form.elements[field];
+      if (input) input.value = '';
+      button.remove();
+    }));
+    m.el.querySelectorAll('[data-image-field] input[type=file]').forEach(input => input.addEventListener('change', async () => {
+      if (!input.files[0]) return;
+      try {
+        const image = await shrinkImage(input.files[0]);
+        const box = input.closest('[data-image-field]');
+        box.dataset.removed = '0';
+        setHTML(box.querySelector('.image-preview-wrap'), html`<img class="image-preview" src="${image}" alt="">`);
+      } catch (err) { toast(err.message, 'error'); input.value = ''; }
+    }));
     async function submit(e) {
       if (e) e.preventDefault();
       errorBox.classList.add('d-none');
@@ -300,7 +360,7 @@
       if (missing) { errorBox.textContent = `${missing.label} is required.`; errorBox.classList.remove('d-none'); form.elements[missing.name].focus(); return; }
       submitBtn.disabled = true;
       try {
-        const result = await onSubmit(collect(), m);
+        const result = await onSubmit(await collect(), m);
         if (result !== false) m.hide();
       } catch (err) {
         errorBox.textContent = err.message || 'Could not save.';
@@ -513,7 +573,7 @@
     setHTML(sidebar, html`<div class="sg-brand"><div class="sg-brand-icon"><i class="bi bi-shield-lock-fill"></i></div><div class="sg-brand-text">StoreGuard<small>${s.business.name}</small></div></div>
       <div class="sg-store"><i class="bi bi-shop"></i><span>${s.branch ? s.branch.name : 'Main branch'}</span></div>
       <nav class="sg-nav">${nav}</nav>
-      <div class="sg-sidebar-footer"><div class="sg-user"><div class="sg-avatar">${s.user.initials}</div><div class="sg-user-meta"><div class="name">${s.user.name}</div><div class="role">${s.role_label}</div></div>
+      <div class="sg-sidebar-footer"><div class="sg-user">${s.user.image ? html`<img class="sg-avatar avatar-image" src="${s.user.image}" alt="">` : html`<div class="sg-avatar">${s.user.initials}</div>`}<div class="sg-user-meta"><div class="name">${s.user.name}</div><div class="role">${s.role_label}</div></div>
       <button class="sg-icon-btn" type="button" data-logout title="Sign out" aria-label="Sign out"><i class="bi bi-box-arrow-right"></i></button></div></div>`);
 
     const overlay = document.createElement('div');
@@ -530,7 +590,7 @@
         <span class="sg-conn" id="sgConn"><i class="bi bi-wifi"></i><span class="hide-sm">Online</span></span>
         <div class="dropdown"><button class="sg-icon-btn" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-label="Notifications" id="sgBell"><i class="bi bi-bell"></i><span class="dot-count d-none" id="sgBellCount"></span></button>
           <div class="dropdown-menu dropdown-menu-end sg-notif-menu" id="sgNotifMenu"><div class="head">Notifications</div>${loader('Checking for updates…', { size: 'sm' })}</div></div>
-        <div class="dropdown"><button class="sg-profile-btn" type="button" data-bs-toggle="dropdown" aria-label="Account menu"><span class="sg-avatar sm">${s.user.initials}</span><i class="bi bi-chevron-down small"></i></button>
+        <div class="dropdown"><button class="sg-profile-btn" type="button" data-bs-toggle="dropdown" aria-label="Account menu">${s.user.image ? html`<img class="sg-avatar sm avatar-image" src="${s.user.image}" alt="">` : html`<span class="sg-avatar sm">${s.user.initials}</span>`}<i class="bi bi-chevron-down small"></i></button>
           <ul class="dropdown-menu dropdown-menu-end"><li class="px-3 py-2"><div class="fw-600 small">${s.user.name}</div><div class="small-xs text-muted-sg">${s.user.email}</div></li><li><hr class="dropdown-divider"></li>
           <li><a class="dropdown-item small" href="/profile.html"><i class="bi bi-person me-2"></i>My profile</a></li>
           ${can('settings') ? html`<li><a class="dropdown-item small" href="/settings.html"><i class="bi bi-gear me-2"></i>Settings</a></li>` : ''}
@@ -770,28 +830,36 @@
         ${r.tax_id ? html`<div>TIN: ${r.tax_id}</div>` : ''}
       </div>
       <div class="r-title">${toNumber(sale.refunded_amount) ? 'SALES RECEIPT (REFUNDED)' : 'SALES RECEIPT'}</div>
-      <div class="line"><span>Receipt #</span><span class="r-mono">${sale.reference}</span></div>
-      <div class="line"><span>Date</span><span>${fmtDateTime(sale.created_at)}</span></div>
-      ${r.show_cashier && sale.cashier_name ? html`<div class="line"><span>Served by</span><span>${sale.cashier_name}</span></div>` : ''}
-      ${r.show_customer && sale.customer_name ? html`<div class="line"><span>Customer</span><span>${sale.customer_name}</span></div>` : ''}
+      <div class="r-meta">
+        <div class="line"><span>Receipt #</span><span class="r-mono">${sale.reference}</span></div>
+        <div class="line"><span>Date</span><span>${fmtDateTime(sale.created_at)}</span></div>
+        ${r.show_cashier && sale.cashier_name ? html`<div class="line"><span>Served by</span><span>${sale.cashier_name}</span></div>` : ''}
+        ${r.show_customer && sale.customer_name ? html`<div class="line"><span>Customer</span><span>${sale.customer_name}</span></div>` : ''}
+      </div>
       <hr>
       <div class="line r-cols"><span>Item</span><span>Amount</span></div>
+      <div class="r-items">
       ${items.map(i => html`<div class="r-item">
         <div class="r-name">${i.product_name}${r.show_sku && i.sku ? html` <span class="r-sku">[${i.sku}]</span>` : ''}</div>
         <div class="line"><span>&nbsp;&nbsp;${i.quantity} × ${n(i.unit_price)}</span><span>${n(i.line_total)}</span></div>
         ${i.refunded_quantity ? html`<div class="line r-muted"><span>&nbsp;&nbsp;Returned ${i.refunded_quantity}</span><span></span></div>` : ''}</div>`)}
+      </div>
       <hr>
+      <div class="r-totals">
       ${r.show_item_count ? html`<div class="line"><span>Items</span><span>${count}</span></div>` : ''}
       <div class="line"><span>Subtotal</span><span>${n(sale.subtotal)}</span></div>
       ${toNumber(sale.discount) ? html`<div class="line"><span>Discount</span><span>−${n(sale.discount)}</span></div>` : ''}
       ${toNumber(sale.tax) ? html`<div class="line"><span>Tax${taxRate ? ` (${taxRate}%)` : ''}</span><span>${n(sale.tax)}</span></div>` : ''}
       <div class="line r-total"><span>TOTAL</span><span>${money(sale.total)}</span></div>
+      </div>
       <hr>
+      <div class="r-payment">
       ${(() => { const p = splitMomoRef(sale.payment_method, sale.payment_reference); return html`
       <div class="line"><span>Paid by</span><span>${p.label}</span></div>
       ${p.ref ? html`<div class="line"><span>Txn ref</span><span class="r-mono">${p.ref}</span></div>` : ''}`; })()}
       ${sale.amount_tendered ? html`<div class="line"><span>Cash received</span><span>${n(sale.amount_tendered)}</span></div><div class="line r-bold"><span>Change</span><span>${n(sale.change_due)}</span></div>` : ''}
       ${toNumber(sale.refunded_amount) ? html`<div class="line"><span>Refunded</span><span>−${n(sale.refunded_amount)}</span></div>` : ''}
+      </div>
       ${offlineSale ? html`<div class="r-note">Recorded offline. Final receipt number is assigned when the till reconnects.</div>` : ''}
       ${r.policy ? html`<hr><div class="r-policy">${r.policy}</div>` : ''}
       <hr>
@@ -802,30 +870,46 @@
   }
   // Receipt styles, scoped to .receipt so the same rules drive the on-screen preview and the printout.
   const RECEIPT_CSS = `
-    .receipt { font-family: ui-monospace, Consolas, "Courier New", monospace; font-size: 12px; line-height: 1.35; color: #000; background: #fff; width: 100%; max-width: 72mm; margin: 0 auto; }
-    .receipt.paper-58mm { max-width: 48mm; font-size: 10.5px; }
-    .receipt.paper-a4 { max-width: 105mm; font-size: 13px; }
+    .receipt { font-family: "Inter", "Segoe UI", Arial, sans-serif; font-size: 12px; line-height: 1.35; color: #17211b; background: #fff; width: 100%; max-width: 72mm; margin: 0 auto; padding: 5mm 4mm 4mm; border: 1px solid #dfe6e1; border-top: 4px solid #1f6f43; border-radius: 8px; box-shadow: 0 8px 24px rgba(23, 33, 27, .08); box-sizing: border-box; }
+    .receipt.paper-58mm { max-width: 48mm; font-size: 10.5px; padding: 4mm 3mm 3mm; }
+    .receipt.paper-a4 { max-width: 105mm; font-size: 13px; padding: 10mm; }
     .receipt .line { display: flex; justify-content: space-between; gap: 8px; }
     .receipt .line > span:last-child { text-align: right; }
-    .receipt hr { border: 0; border-top: 1px dashed #000; margin: 6px 0; opacity: 1; }
-    .receipt .r-head { text-align: center; margin-bottom: 6px; }
-    .receipt .r-logo { display: block; max-width: 60%; max-height: 70px; margin: 0 auto 4px; object-fit: contain; }
-    .receipt .r-shop { font-size: 1.35em; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; }
-    .receipt .r-tag { font-style: italic; margin-bottom: 2px; }
-    .receipt .r-title { text-align: center; font-weight: 700; letter-spacing: 1px; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 0; margin: 6px 0; }
-    .receipt .r-copy { text-align: center; font-weight: 700; font-size: .85em; letter-spacing: 1px; border: 1px solid #000; padding: 1px 0; margin-bottom: 6px; }
-    .receipt .r-cols { font-weight: 700; font-size: .9em; text-transform: uppercase; }
-    .receipt .r-item { margin-bottom: 2px; }
-    .receipt .r-name { font-weight: 600; word-break: break-word; }
-    .receipt .r-sku, .receipt .r-muted { font-size: .85em; opacity: .75; }
-    .receipt .r-total { font-size: 1.3em; font-weight: 700; margin-top: 3px; }
+    .receipt hr { border: 0; border-top: 1px dashed #aebbb3; margin: 7px 0; opacity: 1; }
+    .receipt .r-head { text-align: center; margin-bottom: 8px; }
+    .receipt .r-logo { display: block; max-width: 60%; max-height: 70px; margin: 0 auto 7px; object-fit: contain; }
+    .receipt .r-shop { font-size: 1.45em; font-weight: 800; letter-spacing: .8px; text-transform: uppercase; }
+    .receipt .r-tag { color: #55705f; margin: 2px 0; }
+    .receipt .r-title { text-align: center; font-size: .78em; font-weight: 800; letter-spacing: 1.5px; color: #55705f; padding: 5px 0 4px; margin: 7px 0 5px; border-top: 1px solid #edf1ee; border-bottom: 1px solid #edf1ee; }
+    .receipt .r-copy { text-align: center; font-weight: 800; font-size: .78em; letter-spacing: 1.2px; color: #1f6f43; background: #edf7f1; border: 1px solid #bcdcca; border-radius: 999px; padding: 3px 6px; margin-bottom: 7px; }
+    .receipt .r-meta { color: #405247; }
+    .receipt .r-meta .line { margin: 1px 0; }
+    .receipt .r-cols { font-weight: 800; font-size: .78em; letter-spacing: .5px; text-transform: uppercase; color: #55705f; padding: 3px 0 5px; }
+    .receipt .r-items { padding: 2px 0; }
+    .receipt .r-item { margin: 0 0 7px; }
+    .receipt .r-name { font-weight: 750; word-break: break-word; }
+    .receipt .r-sku, .receipt .r-muted { font-size: .85em; color: #6b7e71; opacity: 1; }
+    .receipt .r-totals { padding: 2px 0; }
+    .receipt .r-totals .line { margin: 2px 0; }
+    .receipt .r-total { align-items: center; font-size: 1.32em; font-weight: 850; color: #fff; background: #1f6f43; border-radius: 6px; margin: 7px -1px 2px; padding: 7px 8px; }
+    .receipt .r-payment { color: #405247; }
     .receipt .r-bold { font-weight: 700; }
     .receipt .r-mono { font-family: inherit; word-break: break-all; }
-    .receipt .r-note { margin-top: 6px; font-size: .85em; text-align: center; border: 1px dashed #000; padding: 3px; }
-    .receipt .r-policy { font-size: .85em; text-align: center; }
-    .receipt .r-foot { text-align: center; font-weight: 700; }
-    .receipt .r-contact { text-align: center; font-size: .9em; }
-    .receipt .r-powered { text-align: center; font-size: .75em; opacity: .6; margin-top: 6px; }`;
+    .receipt .r-note { margin-top: 7px; font-size: .85em; text-align: center; color: #765d20; background: #fff7de; border: 1px dashed #d6bd70; border-radius: 5px; padding: 5px; }
+    .receipt .r-policy { font-size: .85em; text-align: center; color: #405247; }
+    .receipt .r-foot { text-align: center; font-weight: 800; color: #1f6f43; font-size: 1.05em; }
+    .receipt .r-contact { text-align: center; font-size: .9em; color: #405247; }
+    .receipt .r-powered { text-align: center; font-size: .72em; color: #8a9890; margin-top: 7px; }
+    @media print {
+      .receipt { color: #000; border: 0; border-top: 2px solid #000; border-radius: 0; box-shadow: none; }
+      .receipt .r-tag, .receipt .r-meta, .receipt .r-cols, .receipt .r-sku, .receipt .r-muted, .receipt .r-payment, .receipt .r-policy, .receipt .r-contact { color: #000; }
+      .receipt hr { border-top-color: #000; }
+      .receipt .r-title { color: #000; border-color: #000; }
+      .receipt .r-total { color: #000; background: transparent; border: 1px solid #000; }
+      .receipt .r-foot { color: #000; }
+      .receipt .r-copy { color: #000; background: transparent; border-color: #000; }
+      .receipt .r-powered { color: #666; }
+    }`;
   (function injectReceiptCSS() {
     const s = document.createElement('style');
     s.id = 'sgReceiptCSS'; s.textContent = RECEIPT_CSS;
@@ -900,7 +984,7 @@
     VERSION, api, ApiError, html, raw, esc, setHTML, money, moneyCompact, int, toNumber, fmtDate, fmtTime, fmtDateTime, fmtDay,
     ago, duration, today, titleCase, paymentLabel, splitMomoRef, roleLabel, badge, PAYMENT_LABELS, PAYMENT_ICONS, MOMO_NETWORKS, CATEGORY_ICONS, ROLE_LABELS,
     store, toast, ok, fail, modal, confirm: confirmDialog, formModal, Table, exportCSV, SERIES, legend, lineChart, barChart,
-    doughnut, can, canAny, boot, homeUrl, offline, loader, successMark, receiptHTML, receiptDocument, receiptOptions, printReceipt, debounce, param, uuid, busy, rangeChips,
+    doughnut, can, canAny, boot, homeUrl, offline, loader, successMark, resizeImage: shrinkImage, receiptHTML, receiptDocument, receiptOptions, printReceipt, debounce, param, uuid, busy, rangeChips,
     currencySymbol, logout,
     get session() { return state.session; },
     get online() { return state.online; },

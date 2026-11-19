@@ -114,6 +114,7 @@ class User(TimestampMixin, db.Model):
     full_name = db.Column(db.String(160), nullable=False)
     email = db.Column(db.String(255), nullable=False, unique=True, index=True)
     phone = db.Column(db.String(40), nullable=False, default="")
+    image = db.Column(db.Text, nullable=False, default="")
     employee_code = db.Column(db.String(40), nullable=False, default="")
     role = db.Column(db.String(40), nullable=False, default="cashier")
     shift_pattern = db.Column(db.String(20), nullable=False, default="morning")
@@ -145,7 +146,7 @@ class User(TimestampMixin, db.Model):
         data = {
             "id": self.id, "name": self.full_name, "initials": self.initials, "email": self.email,
             "phone": self.phone, "employee_code": self.employee_code, "role": self.role,
-            "shift_pattern": self.shift_pattern, "active": self.active,
+            "shift_pattern": self.shift_pattern, "active": self.active, "image": self.image or "",
             "permissions": sorted(effective_permissions(self)),
             "custom_permissions": self.permissions is not None,
             "last_login_at": iso(self.last_login_at), "created_at": iso(self.created_at),
@@ -188,6 +189,7 @@ class Product(TimestampMixin, db.Model):
     stock_quantity = db.Column(db.Integer, nullable=False, default=0)
     reorder_level = db.Column(db.Integer, nullable=False, default=5)
     expiry_date = db.Column(db.Date, nullable=True)
+    image = db.Column(db.Text, nullable=False, default="")
     active = db.Column(db.Boolean, nullable=False, default=True)
     __table_args__ = (db.UniqueConstraint("business_id", "sku", name="uq_business_product_sku"),)
 
@@ -200,7 +202,7 @@ class Product(TimestampMixin, db.Model):
             "stock_quantity": self.stock_quantity, "reorder_level": self.reorder_level,
             "expiry_date": self.expiry_date.isoformat() if self.expiry_date else None,
             "supplier_id": self.supplier_id, "supplier_name": self.supplier.name if self.supplier else None,
-            "active": self.active,
+            "active": self.active, "image": self.image or "",
         }
         if include_cost:
             data["cost_price"] = money_str(self.cost_price)
