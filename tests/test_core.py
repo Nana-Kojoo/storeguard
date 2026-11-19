@@ -89,6 +89,28 @@ def test_duplicate_sku_and_stock_adjustment(owner):
     assert moves[0]["movement_type"] == "damaged" and moves[0]["quantity"] == -3
 
 
+def test_categories_can_be_created_and_assigned_to_products(owner):
+    food = owner.post("/categories", {"name": "Food"}).get_json()["category"]
+    drinks = owner.post("/categories", {"name": "Drinks"}).get_json()["category"]
+    product = make_product(owner, sku="MULTI-1", category="food", category_ids=[food["id"], drinks["id"]])
+    assert product["category_ids"] == [food["id"], drinks["id"]]
+    assert product["categories"] == ["food", "drinks"]
+    updated = owner.patch(f"/products/{product['id']}", {"category_ids": [drinks["id"]]}).get_json()["product"]
+    assert updated["category_ids"] == [drinks["id"]]
+    assert owner.delete(f"/categories/{drinks['id']}").status_code == 409
+    assert owner.patch(f"/categories/{drinks['id']}", {"name": "Groceries"}).status_code == 200
+    assert owner.get(f"/products/{product['id']}").get_json()["product"]["category"] == "groceries"
+    plain = make_product(owner, sku="PLAIN-1", category_ids=[])
+    assert plain["categories"] == ["general"]
+    assert owner.post("/products", {"name": "X", "sku": "BAD-1", "price": "1.00", "category_ids": [999999]}).status_code == 400
+
+
+def test_blank_sku_is_generated_from_name(owner):
+    first = owner.post("/products", {"name": "Rice 5kg Royal", "price": "85.00"}).get_json()["product"]
+    second = owner.post("/products", {"name": "Rice 5kg Royal", "sku": "  ", "price": "85.00"}).get_json()["product"]
+    assert first["sku"] == "RICE-5KG-ROYAL-001" and second["sku"] == "RICE-5KG-ROYAL-002"
+
+
 def test_profile_and_product_images_can_be_saved(owner):
     image = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAF/gJ/l21eXQAAAABJRU5ErkJggg=="
     r = owner.patch("/auth/me", {"image": image})
@@ -247,3 +269,28 @@ def test_role_assignment_rules(owner):
     r = owner.post("/employees", {"full_name": "Y", "email": "y@example.com", "role": "manager",
                                   "password": "temporary pass 123"})
     assert r.status_code == 403
+
+
+def test_spreadsheet_import_creates_updates_and_reports_errors(owner):
+    existing = make_product(owner, sku="SUGAR-1", stock=4)
+    rows = [
+        {"name": "Milo 400g", "price": "GH₵ 1,250.50", "cost_price": "40", "stock_quantity": "12", "category": "Drinks, Breakfast"},
+        {"name": "Anything", "sku": "SUGAR-1", "price": "99", "stock_quantity": 10},
+        {"name": "No price"},
+        {"name": "milo 400G", "stock_quantity": "15"},
+    ]
+    preview = owner.post("/products/import", {"rows": rows, "dry_run": True}).get_json()
+    assert (preview["created"], preview["updated"], preview["failed"]) == (1, 2, 1)
+    assert owner.get("/products").get_json()["products"].__len__() == 1  # dry run saved nothing
+
+    result = owner.post("/products/import", {"rows": rows}).get_json()
+    assert (result["created"], result["updated"], result["failed"]) == (1, 2, 1)
+    assert "Price is required" in result["results"][2]["error"]
+    products = {p["sku"]: p for p in owner.get("/products").get_json()["products"]}
+    milo = next(p for p in products.values() if p["name"] == "Milo 400g")
+    assert milo["price"] == "1250.50" and milo["stock_quantity"] == 15 and milo["categories"] == ["drinks", "breakfast"]
+    assert products["SUGAR-1"]["stock_quantity"] == 10 and products["SUGAR-1"]["price"] == "99.00"
+    assert products["SUGAR-1"]["id"] == existing["id"]
+
+    added = owner.post("/products/import", {"rows": [{"sku": "SUGAR-1", "stock_quantity": 5}], "stock_mode": "add"}).get_json()
+    assert added["updated"] == 1 and added["results"][0]["stock_quantity"] == 15

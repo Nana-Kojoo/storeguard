@@ -277,6 +277,15 @@
           const opt = typeof o === 'object' ? o : { value: o, label: o };
           return html`<option value="${opt.value}" ${String(opt.value) === String(v) ? raw('selected') : ''}>${opt.label}</option>`;
         })}</select>`;
+      case 'multiselect': {
+        const selected = Array.isArray(v) ? v.map(String) : [];
+        const opts = f.options || [];
+        if (!opts.length) return html`<div class="form-text" id="${id}">${f.emptyText || 'No options available.'}</div>`;
+        return html`<div class="check-list" id="${id}" role="group">${opts.map((o, i) => {
+          const opt = typeof o === 'object' ? o : { value: o, label: o };
+          return html`<label class="check-pill" for="${id}_${i}"><input type="checkbox" id="${id}_${i}" name="${f.name}" value="${opt.value}" ${selected.includes(String(opt.value)) ? raw('checked') : ''}><span>${opt.label}</span></label>`;
+        })}</div>`;
+      }
       case 'textarea':
         return html`<textarea class="form-control" rows="${f.rows || 3}" maxlength="${f.max || 500}" ${common} placeholder="${f.placeholder || ''}">${v}</textarea>`;
       case 'checkbox':
@@ -323,6 +332,10 @@
       for (const f of fields) {
         if (f.type === 'html') continue;
         if (f.type === 'hidden') { out[f.name] = values[f.name]; continue; }
+        if (f.type === 'multiselect') {
+          out[f.name] = [...form.querySelectorAll('input[type="checkbox"]:checked')].filter(i => i.name === f.name).map(i => i.value);
+          continue;
+        }
         const input = form.elements[f.name];
         if (!input) return;
         if (f.type === 'image') {

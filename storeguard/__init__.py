@@ -113,6 +113,7 @@ def create_app(test_config=None):
         with app.app_context():
             db.create_all()
             _add_missing_columns()
+            _backfill_product_categories()
 
     return app
 
@@ -138,3 +139,21 @@ def _add_missing_columns():
                 if name not in existing:
                     conn.execute(text(f'ALTER TABLE "{table}" ADD COLUMN {name} {ddl}'))
                     logging.getLogger(__name__).info("Added column %s.%s", table, name)
+
+
+def _backfill_product_categories():
+    from .models import Category, Product
+
+    changed = False
+    for product in Product.query.all():
+        category = Category.query.filter_by(business_id=product.business_id, name=product.category).first()
+        if not category:
+            category = Category(business_id=product.business_id, name=product.category)
+            db.session.add(category)
+            db.session.flush()
+            changed = True
+        if category not in product.categories:
+            product.categories.append(category)
+            changed = True
+    if changed:
+        db.session.commit()

@@ -158,6 +158,23 @@ class User(TimestampMixin, db.Model):
 
 # ---------------------------------------------------------------- catalog
 
+product_categories = db.Table(
+    "product_categories",
+    db.Column("product_id", db.Integer, db.ForeignKey("product.id", ondelete="CASCADE"), primary_key=True),
+    db.Column("category_id", db.Integer, db.ForeignKey("category.id", ondelete="CASCADE"), primary_key=True),
+)
+
+
+class Category(TimestampMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    business_id = db.Column(db.Integer, db.ForeignKey("business.id"), nullable=False, index=True)
+    name = db.Column(db.String(80), nullable=False)
+    __table_args__ = (db.UniqueConstraint("business_id", "name", name="uq_business_category_name"),)
+
+    def as_dict(self, product_count=0):
+        return {"id": self.id, "name": self.name, "product_count": product_count}
+
+
 class Supplier(TimestampMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     business_id = db.Column(db.Integer, db.ForeignKey("business.id"), nullable=False, index=True)
@@ -194,11 +211,14 @@ class Product(TimestampMixin, db.Model):
     __table_args__ = (db.UniqueConstraint("business_id", "sku", name="uq_business_product_sku"),)
 
     supplier = db.relationship("Supplier")
+    categories = db.relationship("Category", secondary=product_categories, backref="products")
 
     def as_dict(self, include_cost=True):
         data = {
             "id": self.id, "name": self.name, "sku": self.sku, "barcode": self.barcode,
             "category": self.category, "unit": self.unit, "price": money_str(self.price),
+            "category_ids": [category.id for category in self.categories],
+            "categories": [category.name for category in self.categories],
             "stock_quantity": self.stock_quantity, "reorder_level": self.reorder_level,
             "expiry_date": self.expiry_date.isoformat() if self.expiry_date else None,
             "supplier_id": self.supplier_id, "supplier_name": self.supplier.name if self.supplier else None,
