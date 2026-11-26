@@ -40,6 +40,8 @@ def create_app(test_config=None):
         ALLOW_REGISTRATION=os.getenv("ALLOW_REGISTRATION", "true").lower() == "true",
         FRONTEND_DIR=str(ROOT / "frontend"),
         AUTO_CREATE_TABLES=os.getenv("AUTO_CREATE_TABLES", "true").lower() == "true",
+        # Offer the "run it on your store PC" Windows download on the home page.
+        DOWNLOADS_ENABLED=os.getenv("DOWNLOADS_ENABLED", "true").lower() == "true",
         CSRF_DISABLED=False,
     )
     if test_config:
@@ -48,7 +50,8 @@ def create_app(test_config=None):
 
     if production and app.config["SECRET_KEY"] in ("", DEV_SECRET, "replace-me-in-development"):
         raise RuntimeError("SECRET_KEY must be set to a long random value when APP_ENV=production")
-    if production and app.config["SQLALCHEMY_DATABASE_URI"].startswith("sqlite"):
+    if (production and app.config["SQLALCHEMY_DATABASE_URI"].startswith("sqlite")
+            and os.getenv("LOCAL_INSTALL", "false").lower() != "true"):  # a single store PC is fine on SQLite
         logging.getLogger(__name__).warning("Running production on SQLite; use PostgreSQL for multi-user deployments")
 
     if int(os.getenv("TRUSTED_PROXIES", "0")):
@@ -113,6 +116,7 @@ def create_app(test_config=None):
         with app.app_context():
             db.create_all()
             _add_missing_columns()
+            _backfill_product_categories()
 
     return app
 
@@ -138,3 +142,21 @@ def _add_missing_columns():
                 if name not in existing:
                     conn.execute(text(f'ALTER TABLE "{table}" ADD COLUMN {name} {ddl}'))
                     logging.getLogger(__name__).info("Added column %s.%s", table, name)
+
+
+def _backfill_product_categories():
+    from .models import Category, Product
+
+    changed = False
+    for product in Product.query.all():
+        category = Category.query.filter_by(business_id=product.business_id, name=product.category).first()
+        if not category:
+            category = Category(business_id=product.business_id, name=product.category)
+            db.session.add(category)
+            db.session.flush()
+            changed = True
+        if category not in product.categories:
+            product.categories.append(category)
+            changed = True
+    if changed:
+        db.session.commit()

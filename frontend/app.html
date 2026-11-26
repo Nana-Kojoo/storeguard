@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>StoreGuard</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#0f3d2b">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="/vendor/inter/inter.css">
+  <link rel="stylesheet" href="/vendor/bootstrap/bootstrap.min.css">
+  <link rel="stylesheet" href="/vendor/bootstrap-icons/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <main class="launch" id="launch">
+    <div class="sg-loader" role="status" aria-live="polite">
+      <div class="sg-loader-scene" aria-hidden="true"><div class="sg-loader-items"><span></span><span></span><span></span><span></span></div><i class="bi bi-cart3 sg-loader-cart"></i></div>
+      <div class="sg-loader-text">Opening StoreGuard…</div>
+    </div>
+    <noscript><div class="notice danger m-3">StoreGuard needs JavaScript enabled.</div></noscript>
+  </main>
+  <script src="/vendor/bootstrap/bootstrap.bundle.min.js" defer></script>
+  <script src="/js/pwa.js" defer></script>
+  <script src="/js/storeguard.js" defer></script>
+  <script src="/js/launch.js" defer></script>
+</body>
+</html>

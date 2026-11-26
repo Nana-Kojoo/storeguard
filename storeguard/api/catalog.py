@@ -1,3 +1,4 @@
+import re
 from datetime import timedelta
 from uuid import uuid4
 
@@ -5,7 +6,7 @@ from flask import jsonify, request
 from sqlalchemy import or_
 
 from ..extensions import db
-from ..models import Product, PurchaseItem, PurchaseOrder, StockMovement, Supplier, utcnow
+from ..models import Category, Product, PurchaseItem, PurchaseOrder, StockMovement, Supplier, product_categories, utcnow
 from ..security import has_permission, login_required, permission_required
 from ..utils import (ApiError, audit, body, clean_image, date_range_from_args, day_bounds, like, local_today, paginate,
                      raise_alert, to_date, to_int, to_money, to_text)
@@ -51,12 +52,25 @@ def check_low_stock(user, product):
                     entity_type="product", entity_id=product.id, dedupe=True)
 
 
+def generate_sku(user, name):
+    """Build a readable unique SKU such as RICE-5KG-001 from the product name."""
+    prefix = "-".join(re.findall(r"[A-Z0-9]+", (name or "").upper())[:3])[:20] or "ITEM"
+    taken = {sku for (sku,) in db.session.query(Product.sku).filter(Product.business_id == user.business_id,
+                                                                     Product.sku.like(f"{prefix}-%"))}
+    n = 1
+    while f"{prefix}-{n:03d}" in taken:
+        n += 1
+    return f"{prefix}-{n:03d}"
+
+
 def apply_product_fields(product, payload, user, creating=False):
     if "image" in payload:
         product.image = clean_image(payload.get("image"))
     if creating or "name" in payload:
         product.name = to_text(payload.get("name"), "name", 160, required=True)
-    if creating or "sku" in payload:
+    if creating and not str(payload.get("sku") or "").strip():
+        product.sku = generate_sku(user, product.name)
+    elif creating or "sku" in payload:
         product.sku = to_text(payload.get("sku"), "sku", 80, required=True)
     if "barcode" in payload:
         product.barcode = to_text(payload.get("barcode"), "barcode", 80)
@@ -85,6 +99,104 @@ def apply_product_fields(product, payload, user, creating=False):
                                          Product.id != (product.id or 0)).first()
     if duplicate:
         raise ApiError("A product with this SKU already exists", 409)
+
+
+def apply_product_categories(product, payload, user, creating=False):
+    if "category_ids" in payload:
+        ids = payload.get("category_ids") or []
+        if not isinstance(ids, list):
+            raise ApiError("category_ids must be a list")
+        try:
+            ids = list(dict.fromkeys(int(value) for value in ids))
+        except (TypeError, ValueError):
+            raise ApiError("category_ids must contain valid category IDs")
+        found = {c.id: c for c in Category.query.filter(Category.business_id == user.business_id, Category.id.in_(ids)).all()} if ids else {}
+        if len(found) != len(ids):
+            raise ApiError("One or more categories were not found")
+        if ids:
+            product.categories = [found[i] for i in ids]
+            if "category" not in payload:
+                product.category = found[ids[0]].name
+            return
+        # No categories ticked: fall back to the product's primary category so it is never uncategorised.
+        product.categories = []
+        creating = True
+    if not (creating or "category" in payload):
+        return
+    name = product.category
+    category = Category.query.filter_by(business_id=user.business_id, name=name).first()
+    if not category:
+        category = Category(business_id=user.business_id, name=name)
+        db.session.add(category)
+        db.session.flush()
+    if category not in product.categories:
+        product.categories.append(category)
+
+
+# ---------------------------------------------------------------- categories
+
+@api_bp.get("/categories")
+@login_required
+@permission_required("inventory")
+def list_categories(user):
+    categories = Category.query.filter_by(business_id=user.business_id).order_by(Category.name).all()
+    counts = dict(db.session.query(product_categories.c.category_id, db.func.count(product_categories.c.product_id))
+                  .join(Product, Product.id == product_categories.c.product_id)
+                  .filter(Product.business_id == user.business_id, Product.active.is_(True))
+                  .group_by(product_categories.c.category_id).all())
+    return jsonify({"categories": [category.as_dict(counts.get(category.id, 0)) for category in categories]})
+
+
+@api_bp.post("/categories")
+@login_required
+@permission_required("inventory")
+def create_category(user):
+    name = to_text(body().get("name"), "name", 80, required=True).strip().lower()
+    if Category.query.filter_by(business_id=user.business_id, name=name).first():
+        raise ApiError("A category with this name already exists", 409)
+    category = Category(business_id=user.business_id, name=name)
+    db.session.add(category)
+    db.session.flush()
+    audit(user, "category.created", "category", category.id, f"Created category {category.name}")
+    db.session.commit()
+    return jsonify({"category": category.as_dict()}), 201
+
+
+@api_bp.patch("/categories/<int:category_id>")
+@login_required
+@permission_required("inventory")
+def update_category(user, category_id):
+    category = Category.query.filter_by(id=category_id, business_id=user.business_id).first()
+    if not category:
+        raise ApiError("Category not found", 404)
+    old_name = category.name
+    name = to_text(body().get("name"), "name", 80, required=True).strip().lower()
+    duplicate = Category.query.filter(Category.business_id == user.business_id, Category.name == name,
+                                      Category.id != category.id).first()
+    if duplicate:
+        raise ApiError("A category with this name already exists", 409)
+    category.name = name
+    for product in category.products:
+        if product.category == old_name:
+            product.category = name
+    audit(user, "category.updated", "category", category.id, f"Updated category {category.name}")
+    db.session.commit()
+    return jsonify({"category": category.as_dict(len(category.products))})
+
+
+@api_bp.delete("/categories/<int:category_id>")
+@login_required
+@permission_required("inventory")
+def delete_category(user, category_id):
+    category = Category.query.filter_by(id=category_id, business_id=user.business_id).first()
+    if not category:
+        raise ApiError("Category not found", 404)
+    if category.products:
+        raise ApiError("Remove this category from its products (including archived ones) before deleting it", 409)
+    audit(user, "category.deleted", "category", category.id, f"Deleted category {category.name}")
+    db.session.delete(category)
+    db.session.commit()
+    return jsonify({"ok": True})
 
 
 # ---------------------------------------------------------------- products
@@ -120,6 +232,7 @@ def create_product(user):
     opening = to_int(payload.get("stock_quantity"), "stock_quantity", minimum=0, default=0)
     db.session.add(product)
     db.session.flush()
+    apply_product_categories(product, payload, user, creating=True)
     if opening:
         record_movement(user, product, "opening_stock", opening, "Product creation")
     audit(user, "product.created", "product", product.id, f"Created {product.name} ({product.sku})")
@@ -134,6 +247,7 @@ def update_product(user, product_id):
     product = get_product(user, product_id)
     payload = body()
     apply_product_fields(product, payload, user)
+    apply_product_categories(product, payload, user)
     if "stock_quantity" in payload:
         target = to_int(payload["stock_quantity"], "stock_quantity", minimum=0)
         if target != product.stock_quantity:
@@ -142,6 +256,156 @@ def update_product(user, product_id):
     audit(user, "product.updated", "product", product.id, f"Updated {product.name}")
     db.session.commit()
     return jsonify({"product": product.as_dict()})
+
+
+IMPORT_FIELDS = ("name", "sku", "barcode", "category", "unit", "price", "cost_price", "stock_quantity",
+                 "reorder_level", "expiry_date")
+MAX_IMPORT_ROWS = 2000
+
+
+def _clean_number(value):
+    """Spreadsheets often contain prices like "GH₵ 1,200.50" — keep only the number."""
+    if value is None or isinstance(value, (int, float)):
+        return value
+    text = re.sub(r"[^0-9.\-]", "", str(value))
+    return text
+
+
+def _find_existing(user, row):
+    sku = str(row.get("sku") or "").strip()
+    barcode = str(row.get("barcode") or "").strip()
+    name = str(row.get("name") or "").strip()
+    query = Product.query.filter(Product.business_id == user.business_id)
+    if sku:
+        found = query.filter(Product.sku == sku).first()
+        if found:
+            return found
+    if barcode:
+        found = query.filter(Product.barcode == barcode).first()
+        if found:
+            return found
+    if name:
+        return query.filter(db.func.lower(Product.name) == name.lower()).first()
+    return None
+
+
+def _categories_for(user, text, cache):
+    result = []
+    for name in [part.strip().lower()[:80] for part in re.split(r"[,;|/]", str(text or "")) if part.strip()]:
+        if name not in cache:
+            category = Category.query.filter_by(business_id=user.business_id, name=name).first()
+            if not category:
+                category = Category(business_id=user.business_id, name=name)
+                db.session.add(category)
+                db.session.flush()
+            cache[name] = category
+        if cache[name] not in result:
+            result.append(cache[name])
+    return result
+
+
+def _validate_import_row(user, row):
+    """Check every value up front so a bad row fails before anything is written (no savepoints needed)."""
+    v = {
+        "name": to_text(row.get("name"), "name", 160),
+        "sku": to_text(row.get("sku"), "sku", 80),
+        "barcode": to_text(row.get("barcode"), "barcode", 80),
+        "unit": to_text(row.get("unit"), "unit", 20),
+        "price": to_money(_clean_number(row.get("price")), "price", allow_none=True),
+        "cost_price": to_money(_clean_number(row.get("cost_price")), "cost_price", allow_none=True),
+        "reorder_level": to_int(_clean_number(row.get("reorder_level")), "reorder_level", minimum=0, default=-1),
+        "stock": to_int(_clean_number(row.get("stock_quantity")), "stock_quantity", minimum=0, maximum=10_000_000,
+                        default=-1),
+        "expiry_date": to_date(row.get("expiry_date"), "expiry_date"),
+        "categories": [part.strip().lower()[:80] for part in re.split(r"[,;|/]", str(row.get("category") or ""))
+                       if part.strip()],
+    }
+    product = _find_existing(user, row)
+    if not product:
+        if not v["name"]:
+            raise ApiError("Product name is required")
+        if v["price"] is None:
+            raise ApiError("Price is required for new products")
+    if v["sku"] and (not product or product.sku != v["sku"]):
+        if Product.query.filter_by(business_id=user.business_id, sku=v["sku"]).first():
+            raise ApiError(f"SKU {v['sku']} is already used by another product")
+    return product, v
+
+
+def _import_row(user, row, stock_mode, category_cache):
+    product, v = _validate_import_row(user, row)
+    payload = {k: (str(v[k]) if k in ("price", "cost_price") else v[k])
+               for k in ("name", "sku", "barcode", "unit", "price", "cost_price") if v[k] not in (None, "")}
+    if v["reorder_level"] >= 0:
+        payload["reorder_level"] = v["reorder_level"]
+    if v["expiry_date"]:
+        payload["expiry_date"] = v["expiry_date"].isoformat()
+    categories = _categories_for(user, ",".join(v["categories"]), category_cache)
+    if categories:
+        payload["category"] = categories[0].name
+    stock = v["stock"]
+
+    if product:
+        if payload.get("name", "").lower() == product.name.lower():
+            payload.pop("name")  # don't rewrite a name that only differs in capitalisation
+        apply_product_fields(product, payload, user)
+        product.active = True
+        for category in categories:
+            if category not in product.categories:
+                product.categories.append(category)
+        if stock >= 0:
+            delta = stock if stock_mode == "add" else stock - product.stock_quantity
+            if delta:
+                record_movement(user, product, "supplier_delivery" if stock_mode == "add" else "adjustment", delta,
+                                "Spreadsheet import")
+        return "updated", product
+    product = Product(business_id=user.business_id, stock_quantity=0)
+    apply_product_fields(product, payload, user, creating=True)
+    db.session.add(product)
+    db.session.flush()
+    if categories:
+        product.categories = categories
+    else:
+        apply_product_categories(product, payload, user, creating=True)
+    if stock > 0:
+        record_movement(user, product, "opening_stock", stock, "Spreadsheet import")
+    return "created", product
+
+
+@api_bp.post("/products/import")
+@login_required
+@permission_required("inventory")
+def import_products(user):
+    """Bulk create/update products from spreadsheet rows. With dry_run nothing is saved."""
+    payload = body()
+    rows = payload.get("rows")
+    if not isinstance(rows, list) or not rows:
+        raise ApiError("No rows to import")
+    if len(rows) > MAX_IMPORT_ROWS:
+        raise ApiError(f"You can import at most {MAX_IMPORT_ROWS} rows at a time")
+    stock_mode = "add" if payload.get("stock_mode") == "add" else "set"
+    dry_run = bool(payload.get("dry_run"))
+    results, counts, category_cache = [], {"created": 0, "updated": 0, "failed": 0}, {}
+    for index, row in enumerate(rows, start=1):
+        try:
+            if not isinstance(row, dict):
+                raise ApiError("Invalid row")
+            status, product = _import_row(user, row, stock_mode, category_cache)
+            db.session.flush()
+            counts[status] += 1
+            results.append({"row": index, "status": status, "name": product.name, "sku": product.sku,
+                            "stock_quantity": product.stock_quantity})
+        except ApiError as exc:
+            counts["failed"] += 1
+            results.append({"row": index, "status": "failed",
+                            "name": str(row.get("name") or "") if isinstance(row, dict) else "", "error": exc.message})
+    if dry_run:
+        db.session.rollback()
+    else:
+        audit(user, "product.imported", "product", "-",
+              f"Spreadsheet import: {counts['created']} created, {counts['updated']} updated, {counts['failed']} failed")
+        db.session.commit()
+    return jsonify({"dry_run": dry_run, "stock_mode": stock_mode, **counts, "results": results})
 
 
 @api_bp.post("/products/<int:product_id>/restock")

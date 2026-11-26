@@ -9,6 +9,8 @@
   const isManager = ['owner', 'manager'].includes(session.user.role);
   const HELD_KEY = `sg_held_${biz.id}_${session.user.id}`;
   const LAST_KEY = `sg_last_receipt_${biz.id}_${session.user.id}`;
+  const SHIFT_KEY = `sg_shift_${biz.id}_${session.user.id}`;
+  const CUSTOMERS_KEY = `sg_customers_${biz.id}`;
 
   let products = [];
   let cart = [];          // {product_id, name, price, qty, stock}
@@ -73,11 +75,19 @@
   }
 
   async function loadShift() {
-    try { shift = (await SG.api.get('/shifts/current')).shift; } catch (e) { shift = null; }
+    let unreachable = false;
+    try {
+      shift = (await SG.api.get('/shifts/current')).shift;
+      SG.store.set(SHIFT_KEY, shift);
+    } catch (e) {
+      // Offline: assume the shift saved on this device is still open rather than blocking sales.
+      unreachable = e.status === 0;
+      shift = unreachable ? SG.store.get(SHIFT_KEY, null) : null;
+    }
     const pill = $('shiftPill');
-    if (shift) setHTML(pill, html`<i class="bi bi-circle-fill text-emerald" style="font-size:.5rem"></i> Shift open since ${SG.fmtTime(shift.opened_at)}`);
-    else setHTML(pill, html`<i class="bi bi-circle text-amber" style="font-size:.5rem"></i> No open shift`);
-    if (!shift && biz.require_shift_for_sales && !isManager) promptOpenShift();
+    if (shift) setHTML(pill, html`<i class="bi bi-circle-fill text-emerald" style="font-size:.5rem" aria-hidden="true"></i> Shift open since ${SG.fmtTime(shift.opened_at)}`);
+    else setHTML(pill, html`<i class="bi bi-circle text-amber" style="font-size:.5rem" aria-hidden="true"></i> ${unreachable ? 'Shift status unknown (offline)' : 'No open shift'}`);
+    if (!shift && !unreachable && biz.require_shift_for_sales && !isManager) promptOpenShift();
   }
 
   function promptOpenShift() {
@@ -233,14 +243,27 @@
   }
   async function pickCustomer() {
     let list = [];
-    try { list = (await SG.api.get('/customers')).customers; } catch (e) { SG.fail(e); return; }
+    let offlineList = false;
+    try {
+      list = (await SG.api.get('/customers')).customers;
+      SG.store.set(CUSTOMERS_KEY, list.map(c => ({ id: c.id, name: c.name, phone: c.phone, balance: c.balance, available_credit: c.available_credit })));
+    } catch (e) {
+      if (e.status !== 0 || !SG.store.get(CUSTOMERS_KEY)) { SG.fail(e); return; }
+      list = SG.store.get(CUSTOMERS_KEY, []);
+      offlineList = true;
+    }
     const m = SG.modal({
       title: 'Select customer', icon: 'bi-person-lines-fill',
-      body: html`<div class="filter-search mb-3" style="max-width:none"><i class="bi bi-search"></i><input id="custSearch" placeholder="Search name or phone" autocomplete="off"></div><div id="custList"></div>`,
-      footer: html`${customer ? html`<button class="btn-sg btn-ghost me-auto" data-clear>Remove customer</button>` : ''}<button class="btn-sg btn-soft" data-new><i class="bi bi-person-plus"></i> New customer</button>`,
+      body: html`${offlineList ? html`<div class="notice warn mb-3"><i class="bi bi-wifi-off" aria-hidden="true"></i><div>Offline — showing the customer list saved on this device. Balances may be out of date, and new customers can be added once you're back online.</div></div>` : ''}
+        <div class="filter-search mb-3" style="max-width:none"><i class="bi bi-search" aria-hidden="true"></i><input id="custSearch" placeholder="Search name or phone" autocomplete="off" aria-label="Search customers"></div><div id="custList"></div>`,
+      footer: html`${customer ? html`<button class="btn-sg btn-ghost me-auto" data-clear>Remove customer</button>` : ''}${offlineList ? '' : html`<button class="btn-sg btn-soft" data-new><i class="bi bi-person-plus"></i> New customer</button>`}`,
     });
-    const paint = q => setHTML(m.el.querySelector('#custList'), html`${list.filter(c => !q || c.name.toLowerCase().includes(q) || c.phone.includes(q)).slice(0, 50).map(c => html`
-      <div class="list-row" style="cursor:pointer" data-pick="${c.id}"><div class="main"><div class="fw-600">${c.name}</div><div class="meta"><span>${c.phone || 'No phone'}</span><span>Owes ${money(c.balance)}</span><span>Credit left ${money(c.available_credit)}</span></div></div></div>`)}` || html`<div class="small text-muted-sg">No customers found.</div>`);
+    const paint = q => {
+      const hits = list.filter(c => !q || c.name.toLowerCase().includes(q) || (c.phone || '').includes(q)).slice(0, 50);
+      setHTML(m.el.querySelector('#custList'), hits.length ? html`${hits.map(c => html`
+        <button type="button" class="list-row list-row-btn" data-pick="${c.id}"><span class="main"><span class="d-block fw-600">${c.name}</span><span class="meta"><span>${c.phone || 'No phone'}</span><span>Owes ${money(c.balance)}</span><span>Credit left ${money(c.available_credit)}</span></span></span></button>`)}`
+        : html`<div class="small text-muted-sg">No customers found.</div>`);
+    };
     paint('');
     m.el.querySelector('#custSearch').addEventListener('input', e => paint(e.target.value.trim().toLowerCase()));
     m.el.addEventListener('click', e => {

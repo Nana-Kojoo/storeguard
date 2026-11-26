@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>StoreGuard — Point of sale, inventory and staff accountability for your shop</title>
+  <meta name="description" content="StoreGuard is the till, stockroom and back office for supermarkets and shops: point of sale, inventory, staff shifts, cash drawers and loss prevention. Install it as an app or run it on your store PC.">
+  <meta property="og:title" content="StoreGuard — run your shop with complete accountability">
+  <meta property="og:description" content="Point of sale, inventory, staff shifts, cash drawers and loss prevention in one app for supermarkets and shops.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="/icons/icon-512.png">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#0f3d2b">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="/vendor/inter/inter.css">
+  <link rel="stylesheet" href="/vendor/bootstrap-icons/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="/css/home.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="nav" id="top">
+    <div class="wrap nav-inner">
+      <a class="brand" href="/" aria-label="StoreGuard home">
+        <span class="brand-mark" aria-hidden="true"><i class="bi bi-shield-lock-fill"></i></span>
+        <span>StoreGuard</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="navMenu" id="navToggle">
+        <i class="bi bi-list" aria-hidden="true"></i><span class="sr-only">Menu</span>
+      </button>
+      <nav id="navMenu" class="nav-menu" aria-label="Main">
+        <a href="#features">Features</a>
+        <a href="#install">Install</a>
+        <a href="#operate">How to use</a>
+        <a href="#faq">FAQ</a>
+        <a href="#support">Support</a>
+        <a class="btn btn-quiet" href="/auth.html" data-signed-out>Sign in</a>
+        <a class="btn btn-primary" href="/app" data-open-app><span data-signed-out>Open app</span><span data-signed-in hidden>Open StoreGuard</span></a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" tabindex="-1">
+    <!-- ============================================================ hero -->
+    <section class="hero" aria-labelledby="heroTitle">
+      <div class="wrap hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">Point of sale · Inventory · Staff accountability</p>
+          <h1 id="heroTitle">The till, stockroom and back office for your shop, <span>in one app.</span></h1>
+          <p class="lead">StoreGuard runs your checkout, tracks every item on the shelf and records who did what, from the first sale of the morning to the last cash count at night. Owners see the whole business from anywhere.</p>
+          <div class="hero-actions">
+            <a class="btn btn-accent btn-lg" href="#install"><i class="bi bi-download" aria-hidden="true"></i> Install StoreGuard</a>
+            <a class="btn btn-line btn-lg" href="#operate"><i class="bi bi-book" aria-hidden="true"></i> See how it works</a>
+          </div>
+          <ul class="hero-points">
+            <li><i class="bi bi-check2" aria-hidden="true"></i> PCs, laptops, tablets and phones</li>
+            <li><i class="bi bi-check2" aria-hidden="true"></i> Cash, Mobile Money and card</li>
+            <li><i class="bi bi-check2" aria-hidden="true"></i> Every sale tied to a person</li>
+          </ul>
+        </div>
+
+        <!-- Illustration of the point of sale screen (decorative) -->
+        <div class="mock" aria-hidden="true">
+          <div class="mock-bar"><span></span><span></span><span></span><b>Point of Sale</b><em><i class="bi bi-person-badge"></i> Till 1 · Shift open</em></div>
+          <div class="mock-body">
+            <div class="mock-grid">
+              <div class="tile"><i class="bi bi-basket"></i><b>Rice 5kg</b><span>GH₵ 85.00</span></div>
+              <div class="tile"><i class="bi bi-cup-straw"></i><b>Malt drink</b><span>GH₵ 9.50</span></div>
+              <div class="tile"><i class="bi bi-cup"></i><b>Milk 1L</b><span>GH₵ 18.00</span></div>
+              <div class="tile"><i class="bi bi-cookie"></i><b>Biscuits</b><span>GH₵ 6.00</span></div>
+              <div class="tile"><i class="bi bi-house"></i><b>Detergent</b><span>GH₵ 32.00</span></div>
+              <div class="tile"><i class="bi bi-basket2"></i><b>Bread</b><span>GH₵ 15.00</span></div>
+            </div>
+            <div class="mock-cart">
+              <div class="line"><span>Rice 5kg × 1</span><span>85.00</span></div>
+              <div class="line"><span>Malt drink × 4</span><span>38.00</span></div>
+              <div class="line"><span>Bread × 2</span><span>30.00</span></div>
+              <div class="line total"><span>Total</span><span>GH₵ 153.00</span></div>
+              <div class="pay"><span class="on">Cash</span><span>MoMo</span><span>Card</span></div>
+              <div class="charge"><i class="bi bi-check-circle"></i> Charge GH₵ 153.00</div>
+            </div>
+          </div>
+          <div class="mock-float mock-float-a"><i class="bi bi-graph-up-arrow"></i><div><b>GH₵ 4,812</b><span>Today's sales</span></div></div>
+          <div class="mock-float mock-float-b"><i class="bi bi-shield-check"></i><div><b>Drawer balanced</b><span>Shift closed by Efua</span></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ strip -->
+    <section class="strip" aria-label="StoreGuard at a glance">
+      <div class="wrap strip-grid">
+        <div><b>6</b><span>staff roles with their own permissions</span></div>
+        <div><b>3</b><span>ways to run it: app, store PC or browser</span></div>
+        <div><b>58 · 80mm · A4</b><span>receipt printers supported</span></div>
+        <div><b>Excel &amp; CSV</b><span>import your whole product list</span></div>
+      </div>
+    </section>
+
+    <!-- ============================================================ features -->
+    <section class="section" id="features" aria-labelledby="featuresTitle">
+      <div class="wrap">
+        <div class="section-head">
+          <p class="kicker">What's inside</p>
+          <h2 id="featuresTitle">Everything a busy shop needs, nothing it doesn't</h2>
+          <p class="section-lead">Built for owners who can't be on the shop floor all day, and for cashiers who need a till that never gets in the way.</p>
+        </div>
+        <ul class="bento">
+          <li class="bento-lg">
+            <i class="bi bi-upc-scan" aria-hidden="true"></i>
+            <h3>A fast, forgiving point of sale</h3>
+            <p>Scan barcodes or tap product tiles, hold a sale while a customer fetches something, apply discounts within the limit you set, and print a clean receipt on 58mm, 80mm or A4 paper.</p>
+            <div class="chips" aria-label="Payment methods"><span>Cash</span><span>MTN MoMo</span><span>Telecel Cash</span><span>AirtelTigo Money</span><span>Card</span></div>
+          </li>
+          <li><i class="bi bi-box-seam" aria-hidden="true"></i><h3>Inventory &amp; categories</h3><p>Stock levels, reorder alerts, expiry dates and a record of every stock movement.</p></li>
+          <li><i class="bi bi-clock-history" aria-hidden="true"></i><h3>Shifts &amp; cash drawers</h3><p>Cashiers open with a counted float and close with a denomination count. Shortages are flagged.</p></li>
+          <li><i class="bi bi-check2-square" aria-hidden="true"></i><h3>Refunds with approval</h3><p>Refunds, big expenses and cash differences go to a manager. Nobody approves their own.</p></li>
+          <li><i class="bi bi-shield-exclamation" aria-hidden="true"></i><h3>Loss prevention</h3><p>Alerts for unusual refunds, large discounts, voids and shortages, plus a full audit log.</p></li>
+          <li><i class="bi bi-truck" aria-hidden="true"></i><h3>Suppliers &amp; purchases</h3><p>Raise purchase orders and receive deliveries straight into stock with real costs.</p></li>
+          <li><i class="bi bi-person-lines-fill" aria-hidden="true"></i><h3>Customers on credit</h3><p>Keep customer records with credit limits and balances, record repayments and see who owes what.</p></li>
+          <li class="bento-wide">
+            <i class="bi bi-bar-chart-line" aria-hidden="true"></i>
+            <h3>Reports the owner actually reads</h3>
+            <p>Revenue, profit, best sellers, payment mix and staff performance by day, week or quarter, exportable to CSV. Check today's numbers from home on your phone.</p>
+          </li>
+          <li><i class="bi bi-people" aria-hidden="true"></i><h3>Staff &amp; permissions</h3><p>Six roles, with permissions you can fine-tune for each person.</p></li>
+          <li><i class="bi bi-wifi-off" aria-hidden="true"></i><h3>Ready for bad connections</h3><p>Sales made during an outage are saved on the till and synced once, automatically.</p></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============================================================ install -->
+    <section class="section section-tint" id="install" aria-labelledby="installTitle">
+      <div class="wrap">
+        <div class="section-head">
+          <p class="kicker">Get StoreGuard</p>
+          <h2 id="installTitle">Install StoreGuard, step by step</h2>
+          <p class="section-lead">There are three ways to run StoreGuard, and they're all the same software. Most shops install the app on each till; shops with unreliable internet run it on a store PC.</p>
+        </div>
+
+        <div class="tabs" data-tabs>
+          <div class="tablist" role="tablist" aria-label="Ways to install StoreGuard" hidden>
+            <button role="tab" type="button" id="tab-app" aria-controls="panel-app"><i class="bi bi-window-stack" aria-hidden="true"></i> Install as an app</button>
+            <button role="tab" type="button" id="tab-pc" aria-controls="panel-pc"><i class="bi bi-pc-display-horizontal" aria-hidden="true"></i> Run on a store PC</button>
+            <button role="tab" type="button" id="tab-web" aria-controls="panel-web"><i class="bi bi-globe2" aria-hidden="true"></i> Use in the browser</button>
+          </div>
+
+          <!-- ---------------------------------------------------- app -->
+          <div class="tabpanel" role="tabpanel" id="panel-app" aria-labelledby="tab-app">
+            <div class="panel-intro">
+              <div>
+                <h3 class="panel-title">Install as an app <span class="tag">Recommended for tills</span></h3>
+                <p>StoreGuard installs straight from this website, with no app store needed. It gets its own icon and window, starts quickly and updates itself.</p>
+                <button class="btn btn-primary btn-lg" type="button" id="installBtn"><i class="bi bi-download" aria-hidden="true"></i> <span>Install StoreGuard</span></button>
+                <p class="hint" id="installHint" role="status"></p>
+              </div>
+              <ul class="ticks">
+                <li>Windows, Mac, Chromebook, Android, iPhone and iPad</li>
+                <li>Opens from the desktop, taskbar or home screen</li>
+                <li>Keeps your product list on the till</li>
+              </ul>
+            </div>
+            <div class="platforms">
+              <article class="platform">
+                <h4><i class="bi bi-windows" aria-hidden="true"></i> Windows PC, Mac or Chromebook</h4>
+                <p class="platform-note">Use Google Chrome or Microsoft Edge.</p>
+                <ol class="steps-list">
+                  <li>Open this website in Chrome or Edge.</li>
+                  <li>Click <b>Install StoreGuard</b> above. If no window pops up, click the <b>install icon</b> <i class="bi bi-window-plus" aria-hidden="true"></i> at the right end of the address bar.</li>
+                  <li>Click <b>Install</b> to confirm.</li>
+                  <li>StoreGuard opens in its own window. Right-click its taskbar icon and choose <b>Pin to taskbar</b>.</li>
+                  <li>Sign in with your StoreGuard email and password.</li>
+                </ol>
+              </article>
+              <article class="platform">
+                <h4><i class="bi bi-android2" aria-hidden="true"></i> Android phone or tablet</h4>
+                <p class="platform-note">Use Google Chrome.</p>
+                <ol class="steps-list">
+                  <li>Open this website in Chrome.</li>
+                  <li>Tap <b>Install StoreGuard</b> above, or tap the menu <b>⋮</b> and choose <b>Install app</b> (or <b>Add to Home screen</b>).</li>
+                  <li>Tap <b>Install</b>.</li>
+                  <li>Open StoreGuard from your home screen and sign in.</li>
+                </ol>
+              </article>
+              <article class="platform">
+                <h4><i class="bi bi-apple" aria-hidden="true"></i> iPhone or iPad</h4>
+                <p class="platform-note">Use Safari.</p>
+                <ol class="steps-list">
+                  <li>Open this website in Safari.</li>
+                  <li>Tap the <b>Share</b> button <i class="bi bi-box-arrow-up" aria-hidden="true"></i>.</li>
+                  <li>Scroll down and tap <b>Add to Home Screen</b>, then <b>Add</b>.</li>
+                  <li>Open StoreGuard from your home screen and sign in.</li>
+                </ol>
+              </article>
+            </div>
+            <p class="callout"><i class="bi bi-info-circle" aria-hidden="true"></i> <span><b>Sign each cashier in once while the till is online.</b> From then on the till can open StoreGuard and keep selling through an internet outage. Sales sync automatically when the connection returns.</span></p>
+          </div>
+
+          <!-- ---------------------------------------------------- store pc -->
+          <div class="tabpanel" role="tabpanel" id="panel-pc" aria-labelledby="tab-pc">
+            <div class="panel-intro">
+              <div>
+                <h3 class="panel-title">Run it on your store PC <span class="tag">No internet needed day to day</span></h3>
+                <p>Download StoreGuard and run it on a Windows PC in your shop. That PC becomes your store's own server: your data stays in your shop, and the tills connect to it over the shop Wi-Fi.</p>
+                <a class="btn btn-dark btn-lg" href="/download/storeguard-windows.zip" id="downloadBtn" download><i class="bi bi-windows" aria-hidden="true"></i> Download for Windows (.zip)</a>
+                <p class="hint" id="downloadHint">Windows 10 or 11 · about 1 MB · free to download</p>
+              </div>
+              <ul class="ticks">
+                <li>Double-click to start, no technical setup</li>
+                <li>Automatic daily backups, last 30 kept</li>
+                <li>Other tills join over the shop network</li>
+              </ul>
+            </div>
+            <div class="timeline">
+              <h4>Set up the store PC</h4>
+              <ol class="steps-list big">
+                <li><b>Download</b> the zip file with the button above.</li>
+                <li><b>Extract it.</b> Right-click the file in Downloads, choose <b>Extract All…</b>, and extract it to a permanent place such as <code>C:\StoreGuard</code>. Don't put it in Downloads or a OneDrive or Dropbox folder.</li>
+                <li><b>Start it.</b> Open the folder and double-click <b>Start StoreGuard</b>. If Windows shows “Windows protected your PC”, click <b>More info</b>, then <b>Run anyway</b>.</li>
+                <li><b>Let it finish setting up.</b> The first start needs the internet once and takes 1–2 minutes. If Python is missing, the window offers to install it. Press <kbd>Y</kbd>, wait, then double-click <b>Start StoreGuard</b> again.</li>
+                <li><b>Allow the firewall.</b> If Windows Firewall asks, tick <b>Private networks</b> and click <b>Allow</b>, so the other tills can connect.</li>
+                <li><b>Create your business.</b> Your browser opens StoreGuard. Choose <b>Create business</b> and register the owner account.</li>
+                <li><b>Make it an app.</b> In Chrome or Edge, click the install icon in the address bar to give StoreGuard a desktop icon on this PC.</li>
+                <li><b>Keep the black StoreGuard window open</b> while the shop is trading. Closing it stops StoreGuard for every till.</li>
+              </ol>
+              <h4>Connect the other tills, tablets and phones</h4>
+              <ol class="steps-list">
+                <li>Connect the device to the <b>same Wi-Fi or network</b> as the store PC.</li>
+                <li>Look in the StoreGuard window on the store PC for the line <b>Other tills/tablets: http://192.168.…:8000</b>.</li>
+                <li>Type that address into the device's browser and sign in. Bookmark it, or add it to the home screen.</li>
+              </ol>
+              <h4>Good habits</h4>
+              <ul class="ticks">
+                <li><b>Start automatically:</b> press <kbd>Windows</kbd>+<kbd>R</kbd>, type <code>shell:startup</code>, press Enter, and put a shortcut to <b>Start StoreGuard</b> in the folder that opens.</li>
+                <li><b>Back up weekly:</b> copy the <b>backups</b> folder to a USB drive or cloud storage.</li>
+                <li><b>Lock new sign-ups:</b> after creating your business, open <code>.env</code> in Notepad and change <code>ALLOW_REGISTRATION=true</code> to <code>false</code>.</li>
+                <li>Full details, including restoring a backup and updating, are in <b>READ ME FIRST</b> inside the download.</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- ---------------------------------------------------- browser -->
+          <div class="tabpanel" role="tabpanel" id="panel-web" aria-labelledby="tab-web">
+            <div class="panel-intro">
+              <div>
+                <h3 class="panel-title">Use it in the browser <span class="tag">Nothing to install</span></h3>
+                <p>Sign in from any up-to-date browser. This suits owners checking today's sales from home, or a manager on a laptop.</p>
+                <a class="btn btn-primary btn-lg" href="/auth.html" data-signed-out><i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> Sign in or create your business</a>
+                <a class="btn btn-primary btn-lg" href="/app" data-signed-in hidden><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> Open StoreGuard</a>
+              </div>
+              <ul class="ticks">
+                <li>Chrome, Edge, Safari or Firefox</li>
+                <li>The same account on every device</li>
+                <li>You can install it as an app later</li>
+              </ul>
+            </div>
+            <ol class="steps-list big">
+              <li>Click <b>Sign in or create your business</b>.</li>
+              <li><b>New shop?</b> Choose the <b>Create business</b> tab, enter your business name, your name, email and a strong password. You become the owner.</li>
+              <li><b>Already have an account?</b> Enter the email and password your owner or manager gave you.</li>
+              <li>Bookmark the page. On a shared computer, use <b>Sign out</b> in the top-right menu when you finish.</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ operate -->
+    <section class="section" id="operate" aria-labelledby="operateTitle">
+      <div class="wrap">
+        <div class="section-head">
+          <p class="kicker">How to use StoreGuard</p>
+          <h2 id="operateTitle">Operating StoreGuard, step by step</h2>
+          <p class="section-lead">From the owner's first set-up to a cashier's daily routine. Each guide follows the order you'll actually do things in the shop.</p>
+        </div>
+
+        <div class="tabs tabs-side" data-tabs>
+          <div class="tablist" role="tablist" aria-label="Guides" aria-orientation="vertical" hidden>
+            <button role="tab" type="button" id="tab-setup" aria-controls="panel-setup"><i class="bi bi-1-circle" aria-hidden="true"></i> First-time setup</button>
+            <button role="tab" type="button" id="tab-open" aria-controls="panel-open"><i class="bi bi-2-circle" aria-hidden="true"></i> Opening the shop</button>
+            <button role="tab" type="button" id="tab-sell" aria-controls="panel-sell"><i class="bi bi-3-circle" aria-hidden="true"></i> Making a sale</button>
+            <button role="tab" type="button" id="tab-refund" aria-controls="panel-refund"><i class="bi bi-4-circle" aria-hidden="true"></i> Refunds &amp; approvals</button>
+            <button role="tab" type="button" id="tab-stock" aria-controls="panel-stock"><i class="bi bi-5-circle" aria-hidden="true"></i> Stock &amp; deliveries</button>
+            <button role="tab" type="button" id="tab-close" aria-controls="panel-close"><i class="bi bi-6-circle" aria-hidden="true"></i> Closing up</button>
+            <button role="tab" type="button" id="tab-oversee" aria-controls="panel-oversee"><i class="bi bi-7-circle" aria-hidden="true"></i> Reports &amp; oversight</button>
+          </div>
+
+          <div class="tabpanel" role="tabpanel" id="panel-setup" aria-labelledby="tab-setup">
+            <h3 class="panel-title">First-time setup <span class="tag">Owner · about 20 minutes</span></h3>
+            <ol class="steps-list big">
+              <li><b>Create your business.</b> On the sign-in page choose <b>Create business</b>. The account you create is the owner account, so use an email you check and a strong password.</li>
+              <li><b>Fill in Settings.</b> Open <b>Settings</b> from the side menu. Enter your shop's name, branch, address and phone, which print on every receipt, then the currency code (for example GHS), tax rate and time zone.</li>
+              <li><b>Set up receipts.</b> Still in Settings, upload your logo, add a footer and returns policy, choose your paper size (58mm, 80mm or A4) and decide whether receipts print automatically.</li>
+              <li><b>Set your limits.</b> Choose the largest discount a cashier may give (<b>Max cashier discount</b>) and the loss-prevention thresholds that raise security alerts. Leave <b>Cashiers must open a shift before selling</b> switched on.</li>
+              <li><b>Add your products</b> in <b>Inventory</b>, in one of three ways:
+                <ul>
+                  <li><b>Quick add</b>: type many products into a grid, one per row.</li>
+                  <li><b>Import spreadsheet</b>: upload your existing Excel or CSV list. StoreGuard checks it and shows any problems before importing.</li>
+                  <li><b>Add product</b>: one at a time, with a photo, barcode, cost price, selling price, reorder level and expiry date.</li>
+                </ul>
+              </li>
+              <li><b>Add your suppliers</b> in <b>Suppliers &amp; Purchases</b>, so deliveries can be received into stock.</li>
+              <li><b>Add your staff</b> in <b>Employees</b>. Give each person their own account and the right role (see <a href="#roles">Who can do what</a>). Never share logins, because every action is recorded against the person who did it.</li>
+              <li><b>Install StoreGuard on each till</b> (see <a href="#install">Install</a>), name each till (for example “Till 1”), and sign every cashier in once while online.</li>
+              <li><b>Do a test sale</b> and a test refund, print a receipt, then close the test shift. You're ready to trade.</li>
+            </ol>
+          </div>
+
+          <div class="tabpanel" role="tabpanel" id="panel-open" aria-labelledby="tab-open">
+            <h3 class="panel-title">Opening the shop <span class="tag">Cashier · every shift</span></h3>
+            <ol class="steps-list big">
+              <li><b>Sign in</b> on your till with <i>your own</i> email and password.</li>
+              <li>Open <b>Point of Sale</b>. If you have no open shift, StoreGuard asks you to open one.</li>
+              <li><b>Count the float.</b> Count the cash already in the drawer and enter the exact amount. Choose your till name if asked.</li>
+              <li>Click <b>Open shift</b>. Your name and the time are recorded, and you're ready to sell.</li>
+              <li>Check the printer has paper and the barcode scanner beeps when you scan an item.</li>
+            </ol>
+            <p class="callout"><i class="bi bi-lightbulb" aria-hidden="true"></i> <span><b>Supervisors:</b> open <b>Shifts &amp; Attendance</b> to see who has started, who is late and which tills are open.</span></p>
+          </div>
+
+          <div class="tabpanel" role="tabpanel" id="panel-sell" aria-labelledby="tab-sell">
+            <h3 class="panel-title">Making a sale <span class="tag">Cashier</span></h3>
+            <ol class="steps-list big">
+              <li><b>Add items.</b> Scan the barcode, or press <kbd>F2</kbd>, type part of the name or SKU and press <kbd>Enter</kbd>. You can also tap a product tile. Scan again to add more of the same item.</li>
+              <li><b>Adjust the cart.</b> Use <b>+</b> and <b>−</b> to change quantities, or <b>×</b> to remove a line. If your role allows discounts, click <b>edit</b> next to Discount; amounts over the owner's limit are blocked.</li>
+              <li><b>Regular customer?</b> Attach them to the sale so it shows on their record in <b>Customers &amp; Credit</b>.</li>
+              <li><b>Customer waiting?</b> Click <b>Hold</b> to park the sale and serve the next person. Resume it later from <b>Held</b>.</li>
+              <li><b>Charge.</b> Under the cart, choose how the customer pays, then click <b>Charge</b> or press <kbd>F9</kbd>:
+                <ul>
+                  <li><b>Cash</b>: enter the amount handed over. StoreGuard shows the change to give.</li>
+                  <li><b>Mobile Money</b>: choose the network (MTN, Telecel or AirtelTigo) and enter the transaction ID from the customer's message.</li>
+                  <li><b>Card</b>: take the payment on your card machine, then enter its reference.</li>
+                </ul>
+              </li>
+              <li>Click <b>Payment received</b> (cash: <b>Complete sale</b>). The receipt appears and prints. Need another copy? Click <b>Last receipt</b> at the top of the till.</li>
+            </ol>
+            <div class="keys" aria-label="Keyboard shortcuts on the point of sale">
+              <span><kbd>F2</kbd> search or scan</span><span><kbd>Enter</kbd> add the scanned item</span><span><kbd>F9</kbd> charge</span><span><kbd>Esc</kbd> clear search</span>
+            </div>
+            <p class="callout"><i class="bi bi-wifi-off" aria-hidden="true"></i> <span><b>Internet down?</b> Keep selling. An <b>Offline</b> badge shows at the top and each sale is saved on the till. When the connection returns, the sales upload by themselves. <b>Don't clear the browser's data</b> while sales are waiting to sync.</span></p>
+          </div>
+
+          <div class="tabpanel" role="tabpanel" id="panel-refund" aria-labelledby="tab-refund">
+            <h3 class="panel-title">Refunds &amp; approvals <span class="tag">Cashier &amp; manager</span></h3>
+            <ol class="steps-list big">
+              <li>Open <b>Sales &amp; Transactions</b> (cashiers see <b>My Transactions</b>) and find the sale. Search by receipt number or filter by date.</li>
+              <li>Open the sale and click <b>Refund…</b>. Choose the items and quantities being returned and write the reason. Amounts are adjusted automatically for any discount and tax on the original sale.</li>
+              <li>Click <b>Request refund</b>. Cashiers' refunds go to <b>Approvals</b>, and the cashier can follow them in <b>My Refunds</b>. Supervisors and managers can process a refund straight away.</li>
+              <li><b>Manager or supervisor:</b> open <b>Approvals</b>, check the reason and the original sale, then <b>Approve</b> or <b>Reject</b>. You can't approve your own request.</li>
+              <li>Once a refund is approved, give the customer their money. Returned items go back into stock automatically.</li>
+            </ol>
+            <p class="callout"><i class="bi bi-shield-check" aria-hidden="true"></i> <span>Large expenses and cash-drawer differences also come to <b>Approvals</b>. Unusual patterns, such as many refunds from one cashier, raise an alert in <b>Security &amp; Alerts</b>.</span></p>
+          </div>
+
+          <div class="tabpanel" role="tabpanel" id="panel-stock" aria-labelledby="tab-stock">
+            <h3 class="panel-title">Stock &amp; deliveries <span class="tag">Stock clerk &amp; manager</span></h3>
+            <ol class="steps-list big">
+              <li><b>Watch for low stock.</b> The Overview and Inventory pages flag products at or below their reorder level.</li>
+              <li><b>Order.</b> In <b>Suppliers &amp; Purchases</b>, create a purchase order, pick the supplier and add the products and quantities.</li>
+              <li><b>Receive the delivery.</b> When the goods arrive, open the purchase order, check it against the delivery note and click <b>Mark as received</b>. Stock levels and cost prices update immediately.</li>
+              <li><b>Fix a count.</b> After a stock take, click <b>Adjust stock</b> <i class="bi bi-sliders" aria-hidden="true"></i> on the product in <b>Inventory</b> and choose the reason, such as damaged, expired or a count correction. Every change is logged in <b>Stock Movements</b>.</li>
+              <li><b>Update prices</b> by editing the product. The new price reaches every till as soon as it's saved.</li>
+            </ol>
+          </div>
+
+          <div class="tabpanel" role="tabpanel" id="panel-close" aria-labelledby="tab-close">
+            <h3 class="panel-title">Closing up <span class="tag">Cashier &amp; manager · every shift</span></h3>
+            <ol class="steps-list big">
+              <li>Finish or clear any <b>held</b> sales.</li>
+              <li>Open <b>My Cash Drawer</b> and find <b>Count &amp; close drawer</b>.</li>
+              <li><b>Count the cash by denomination</b>: enter how many of each note and coin you have. StoreGuard adds it up and compares it with what the drawer should hold.</li>
+              <li>If the count is short or over, explain why in <b>Notes for your supervisor</b>. The difference goes to a manager for review.</li>
+              <li>Click <b>Close drawer &amp; end shift</b>, then sign out.</li>
+              <li><b>Manager:</b> check <b>Cash Management</b> and <b>Approvals</b> for flagged drawers, then glance at <b>Security &amp; Alerts</b>.</li>
+            </ol>
+          </div>
+
+          <div class="tabpanel" role="tabpanel" id="panel-oversee" aria-labelledby="tab-oversee">
+            <h3 class="panel-title">Reports &amp; oversight <span class="tag">Owner &amp; manager</span></h3>
+            <ol class="steps-list big">
+              <li><b>Overview</b> shows today's revenue, profit, sales count, low stock and open alerts at a glance. It's the first page owners see.</li>
+              <li><b>Reports &amp; Analytics</b> breaks the numbers down by day, week, month or quarter: best sellers, payment mix, staff performance and margins. Click <b>Export</b> for a CSV you can open in Excel.</li>
+              <li><b>Security &amp; Alerts</b> lists unusual refunds, big discounts, voids and cash shortages. Open each one, check it and mark it resolved.</li>
+              <li><b>Audit Logs</b> show who did what and when, including price changes, stock adjustments and sign-ins.</li>
+              <li><b>Device Management</b> lists the tills and phones that use the point of sale. Rename them, or block or remove one that's lost or no longer used.</li>
+            </ol>
+          </div>
+        </div>
+
+        <h3 class="sub-title" id="roles">Who can do what</h3>
+        <div class="table-scroll" role="region" aria-labelledby="roles" tabindex="0">
+          <table class="roles">
+            <thead><tr><th scope="col">Role</th><th scope="col">Default access</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">Owner</th><td>Everything, including business settings</td></tr>
+              <tr><th scope="row">Manager</th><td>Everything except business settings</td></tr>
+              <tr><th scope="row">Supervisor</th><td>Point of sale, refunds, discounts, customers, shifts, cash, reports, approvals and security alerts</td></tr>
+              <tr><th scope="row">Cashier</th><td>Point of sale, plus their own sales, refunds, shift and cash drawer</td></tr>
+              <tr><th scope="row">Stock clerk</th><td>Inventory and suppliers</td></tr>
+              <tr><th scope="row">Security</th><td>Alerts, audit log and reports</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="hint">Owners can switch individual permissions on or off for any employee in <b>Employees</b>.</p>
+      </div>
+    </section>
+
+    <!-- ============================================================ faq & troubleshooting -->
+    <section class="section section-tint" id="faq" aria-labelledby="faqTitle">
+      <div class="wrap faq-grid">
+        <div>
+          <p class="kicker">Questions</p>
+          <h2 id="faqTitle">FAQ</h2>
+          <div class="faq">
+            <details>
+              <summary>Do I need the internet to use StoreGuard?</summary>
+              <p>Not to sell. Once a till has signed in, it keeps selling through outages and syncs afterwards. If you run StoreGuard on your store PC, the shop doesn't need the internet at all, except once for the first-time setup.</p>
+            </details>
+            <details>
+              <summary>What equipment do I need?</summary>
+              <p>Any Windows PC, laptop, Mac, Chromebook, Android tablet or iPad with a modern browser. USB and Bluetooth barcode scanners that “type” the code work out of the box. Receipts print to any printer your device can use, including 58mm and 80mm thermal receipt printers.</p>
+            </details>
+            <details>
+              <summary>Can I have several tills?</summary>
+              <p>Yes. Install StoreGuard on each till and give every cashier their own login. With the store PC option, the other tills connect over your shop network using the address shown in the StoreGuard window.</p>
+            </details>
+            <details>
+              <summary>Does it handle Mobile Money?</summary>
+              <p>Yes. Choose Mobile Money at checkout, pick the network (MTN, Telecel or AirtelTigo) and record the transaction ID. It appears on the receipt and in your payment reports.</p>
+            </details>
+            <details>
+              <summary>How is my data kept safe?</summary>
+              <p>Each person has their own login with only the permissions their role needs. Accounts lock after repeated wrong passwords, every sensitive action goes into an audit log, and the app is protected against common web attacks. With the store PC option your data never leaves your shop, and a backup is taken automatically every day.</p>
+            </details>
+            <details>
+              <summary>How do I back up and restore?</summary>
+              <p>On the store PC, StoreGuard saves a dated copy of your database in the <i>backups</i> folder every day and keeps the last 30. Copy that folder to a USB drive or cloud storage regularly. “READ ME FIRST” in the download explains how to restore one.</p>
+            </details>
+          </div>
+        </div>
+        <div>
+          <p class="kicker">Troubleshooting</p>
+          <h2>Something not working?</h2>
+          <div class="faq">
+            <details>
+              <summary>I forgot my password</summary>
+              <p>Ask your owner or manager to reset it in <b>Employees</b>. Owners who are locked out should contact support below.</p>
+            </details>
+            <details>
+              <summary>“Account locked” after wrong passwords</summary>
+              <p>For your security, the account locks for 15 minutes after repeated wrong passwords. Wait for the time shown and try again. If you've forgotten the password, ask a manager to reset it in <b>Employees</b>.</p>
+            </details>
+            <details>
+              <summary>The till says “Offline” or sales are waiting to sync</summary>
+              <p>Check the till's Wi-Fi or network cable. If you use a store PC, make sure its black StoreGuard window is open. Sales upload by themselves once the connection is back; leave the till on and don't clear its browser data.</p>
+            </details>
+            <details>
+              <summary>Other tills can't reach the store PC</summary>
+              <p>Make sure they're on the same Wi-Fi as the store PC and are using the exact address shown in its StoreGuard window. If it still fails, open <b>Windows Security → Firewall → Allow an app</b> on the store PC and allow Python on <b>Private</b> networks.</p>
+            </details>
+            <details>
+              <summary>The receipt doesn't print or looks cut off</summary>
+              <p>Check the printer is on and set as the default printer. In <b>Settings → Receipts</b>, choose the paper size that matches your printer (58mm or 80mm). In the print window, set margins to <b>None</b> and scale to <b>100%</b>.</p>
+            </details>
+            <details>
+              <summary>The barcode scanner does nothing</summary>
+              <p>Click inside the search box (or press <kbd>F2</kbd>) and scan again. Test the scanner in Notepad: if no numbers appear there, it isn't connected or charged.</p>
+            </details>
+            <details>
+              <summary>The “Install” button doesn't appear</summary>
+              <p>Use Chrome or Edge on a computer, Chrome on Android or Safari on iPhone. Installing also needs a secure <b>https://</b> address, or <b>http://localhost:8000</b> on the store PC itself.</p>
+            </details>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ support -->
+    <section class="section" id="support" aria-labelledby="supportTitle">
+      <div class="wrap">
+        <div class="support">
+          <div class="support-copy">
+            <p class="kicker">Support</p>
+            <h2 id="supportTitle">Stuck? Talk to the developer.</h2>
+            <p class="section-lead">If the guides and troubleshooting above don't solve it, contact the developer directly. You'll speak to the person who built StoreGuard.</p>
+            <h3 class="sub-title small-gap">To get help faster, tell us:</h3>
+            <ul class="ticks">
+              <li>Your business name and your role</li>
+              <li>What you were doing, and what you expected to happen</li>
+              <li>A photo or screenshot of the screen, including any error message</li>
+              <li>The device and browser, for example “Till 1, Windows, Chrome”</li>
+            </ul>
+          </div>
+          <div class="contact-card" id="contactCard">
+            <div class="contact-head">
+              <span class="avatar" aria-hidden="true"><i class="bi bi-person-workspace"></i></span>
+              <div><b data-support="name">Nana Kojo</b><span data-support="role">Developer of StoreGuard</span></div>
+            </div>
+            <ul class="contact-list" id="contactList">
+              <li data-support-row="website"><i class="bi bi-globe2" aria-hidden="true"></i><a data-support-link="website" href="https://nana-kojo.vercel.app" target="_blank" rel="noopener">nana-kojo.vercel.app<span class="sr-only"> (opens in a new tab)</span></a></li>
+            </ul>
+            <p class="contact-hours" data-support-row="hours"><i class="bi bi-clock" aria-hidden="true"></i> <span data-support="hours">Monday to Saturday, 8am to 8pm (GMT)</span></p>
+            <p class="hint">For urgent problems during trading hours, call or WhatsApp first.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ cta -->
+    <section class="cta" aria-labelledby="ctaTitle">
+      <div class="wrap cta-inner">
+        <div>
+          <h2 id="ctaTitle">Ready to open the till?</h2>
+          <p>Create your business in a couple of minutes, then install StoreGuard on your tills.</p>
+        </div>
+        <div class="cta-actions">
+          <a class="btn btn-accent btn-lg" href="/auth.html" data-signed-out><i class="bi bi-person-plus" aria-hidden="true"></i> Create your business</a>
+          <a class="btn btn-accent btn-lg" href="/app" data-signed-in hidden><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> Open StoreGuard</a>
+          <a class="btn btn-line btn-lg" href="#install">Install or download</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer-grid">
+      <div>
+        <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true"><i class="bi bi-shield-lock-fill"></i></span><span>StoreGuard</span></a>
+        <p>Retail intelligence. Complete accountability.</p>
+      </div>
+      <nav aria-label="Footer">
+        <h2 class="footer-h">Product</h2>
+        <a href="#features">Features</a><a href="#install">Install</a><a href="#operate">How to use</a><a href="#faq">FAQ</a>
+      </nav>
+      <nav aria-label="Account">
+        <h2 class="footer-h">Account</h2>
+        <a href="/auth.html">Sign in</a><a href="/auth.html">Create your business</a><a href="/app">Open the app</a>
+      </nav>
+      <div>
+        <h2 class="footer-h">Help</h2>
+        <a href="#support">Contact support</a>
+        <a href="#faq">Troubleshooting</a>
+      </div>
+    </div>
+    <div class="wrap footer-base">
+      <p>© <span id="year">2026</span> StoreGuard</p>
+      <p>Designed &amp; developed by <a href="https://nana-kojo.vercel.app" target="_blank" rel="noopener">Nana Kojo<span class="sr-only"> (opens in a new tab)</span></a></p>
+    </div>
+  </footer>
+
+  <!-- Install instructions (shown when the browser has no one-click install) -->
+  <dialog class="dialog" id="installDialog" aria-labelledby="installDialogTitle">
+    <form method="dialog">
+      <h2 id="installDialogTitle"><i class="bi bi-download" aria-hidden="true"></i> Install StoreGuard</h2>
+      <ol id="installSteps" class="steps-list"></ol>
+      <p class="hint" id="installDialogNote"></p>
+      <div class="dialog-actions"><button class="btn btn-primary" value="close" autofocus>Got it</button></div>
+    </form>
+  </dialog>
+
+  <script src="/js/pwa.js" defer></script>
+  <script src="/js/home.js" defer></script>
+</body>
+</html>

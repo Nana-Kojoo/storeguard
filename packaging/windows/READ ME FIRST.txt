@@ -1,0 +1,81 @@
+STOREGUARD FOR WINDOWS - RUN IT ON YOUR STORE PC
+================================================
+
+This folder is a complete copy of StoreGuard. It runs on this PC as your
+store's own server, so the tills keep working even when the internet is down.
+Your data stays on this PC.
+
+
+1. START STOREGUARD
+-------------------
+  1. Move this whole folder somewhere permanent, for example C:\StoreGuard
+     (not inside Downloads, and not inside a OneDrive/Dropbox folder).
+  2. Double-click "Start StoreGuard".
+     - The first start needs the internet once, to finish setting up
+       (about 1-2 minutes). After that, no internet is needed.
+     - If Python is missing, the window offers to install it for you.
+     - If Windows Firewall asks, choose "Allow" on Private networks so
+       other tills in the shop can connect.
+  3. Your browser opens StoreGuard. Choose "Create business" and register
+     the owner account. Then add your staff from the Employees page.
+
+Keep the black StoreGuard window open while the store is trading.
+Closing it stops StoreGuard.
+
+
+2. MAKE IT AN APP (desktop icon, own window)
+--------------------------------------------
+  In Google Chrome or Microsoft Edge, click the "Install" icon at the right
+  of the address bar (or the "Install app" button in StoreGuard's top bar).
+  StoreGuard then opens in its own window from the desktop / Start menu.
+
+  To start StoreGuard automatically when the PC turns on:
+  press Windows+R, type  shell:startup  and press Enter, then put a shortcut
+  to "Start StoreGuard" in the folder that opens.
+
+
+3. OTHER TILLS, TABLETS AND PHONES IN THE SHOP
+----------------------------------------------
+  The StoreGuard window shows an address like  http://192.168.1.20:8000
+  Open that address on any device connected to the shop Wi-Fi/network.
+  Tip: give this PC a fixed IP address in your router so the address
+  never changes.
+
+  The till on this PC can always reach the server (it is the server), so it
+  never goes "offline". Other devices keep selling if the shop network
+  drops for a moment, and their sales sync when it comes back.
+
+
+4. BACKUPS - PLEASE READ
+------------------------
+  Every time StoreGuard starts it saves a copy of the database in the
+  "backups" folder (one per day, the last 30 are kept).
+
+  Your data lives in:   instance\storeguard.db
+  Your settings live in: .env   (contains your secret key - keep it private)
+
+  Copy the "backups" folder to a USB drive or cloud storage regularly.
+  If this PC is lost or breaks, those copies are your store's records.
+
+  To restore: stop StoreGuard, copy a backup over instance\storeguard.db
+  (rename it to storeguard.db), and start StoreGuard again.
+
+
+5. UPDATING TO A NEW VERSION
+----------------------------
+  1. Close the StoreGuard window.
+  2. Download and extract the new version into a NEW folder.
+  3. Copy the "instance" folder, the "backups" folder and the ".env" file
+     from the old folder into the new one.
+  4. Double-click "Start StoreGuard" in the new folder.
+
+
+6. SECURITY TIPS
+----------------
+  - After creating your business, open .env in Notepad and change
+    ALLOW_REGISTRATION=true  to  ALLOW_REGISTRATION=false
+    so nobody else on the network can create a business.
+  - To use StoreGuard on this PC only (no other tills), change
+    HOST=0.0.0.0  to  HOST=127.0.0.1
+  - Lock this PC with a Windows password. Anyone with access to the
+    StoreGuard folder can read the database.

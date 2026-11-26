@@ -2,8 +2,9 @@
 (function () {
   'use strict';
 
-  const VERSION = '3.0.0';
-  const state = { session: null, csrf: null, online: navigator.onLine };
+  const VERSION = '3.1.0';
+  // offlineBoot: the page opened with no connection using the session saved on this device.
+  const state = { session: null, csrf: null, online: navigator.onLine, offlineBoot: false };
 
   // ------------------------------------------------------------------ safe HTML
   class Raw { constructor(s) { this.s = s; } toString() { return this.s; } }
@@ -99,6 +100,18 @@
     remove(key) { try { localStorage.removeItem(key); } catch (e) { /* ignore */ } },
   };
 
+  /**
+   * The last signed-in session, kept on this device so the app (especially the POS) can open
+   * when the connection is down. It holds no credentials: the server still checks the session
+   * cookie on every request, and this copy is cleared on sign-out or when the server says 401.
+   */
+  const sessionCache = {
+    KEY: 'sg_session_cache',
+    save(session) { const copy = Object.assign({}, session); delete copy.csrf_token; store.set(this.KEY, { session: copy, saved_at: new Date().toISOString() }); },
+    load() { const v = store.get(this.KEY); return v && v.session && v.session.user ? v : null; },
+    clear() { store.remove(this.KEY); },
+  };
+
   // ------------------------------------------------------------------ API
   class ApiError extends Error { constructor(message, status, body) { super(message); this.status = status; this.body = body; } }
 
@@ -151,6 +164,7 @@
     setOnline(true);
     const data = await response.json().catch(() => ({}));
     if (data && data.csrf_token) state.csrf = data.csrf_token;
+    if (response.status === 401) sessionCache.clear();
     if (response.status === 401 && !quiet401 && !location.pathname.endsWith('/auth.html')) {
       const next = encodeURIComponent(location.pathname + location.search);
       location.href = `/auth.html?next=${next}&expired=1`;
@@ -186,11 +200,18 @@
   const ok = (m, t) => toast(m, 'success', t);
   function fail(err, fallback) {
     const message = err && err.message ? err.message : (fallback || 'Something went wrong');
-    toast(message, 'error');
-    // If the page never got past its initial loader, replace it so it doesn't spin forever.
+    const offlineErr = err && err.status === 0;
     const stuck = document.querySelector('main [data-boot-loader]');
+    // When offline, the page explains itself below; don't also stack a red toast for every failed request.
+    if (!(offlineErr && (stuck || state.offlineBoot))) toast(message, offlineErr ? 'warning' : 'error');
+    // If the page never got past its initial loader, replace it so it doesn't spin forever.
     if (stuck) {
-      setHTML(stuck.parentElement, html`<div class="card-sg"><div class="empty-state"><i class="bi bi-cloud-slash"></i><div class="title">Couldn't load this page</div><div class="small mb-3">${message}</div><button class="btn-sg btn-forest" type="button" data-reload><i class="bi bi-arrow-clockwise"></i> Retry</button></div></div>`);
+      const posLink = offlineErr && can('pos') && location.pathname !== '/pos.html';
+      setHTML(stuck.parentElement, html`<div class="card-sg"><div class="empty-state"><i class="bi ${offlineErr ? 'bi-wifi-off' : 'bi-cloud-slash'}"></i>
+        <div class="title">${offlineErr ? 'This page needs a connection' : 'Couldn\'t load this page'}</div>
+        <div class="small mb-3">${offlineErr ? 'StoreGuard can\'t reach the server right now. This page will work again as soon as the connection is back.' + (can('pos') ? ' The Point of Sale keeps selling offline.' : '') : message}</div>
+        <div class="d-flex gap-2 justify-content-center flex-wrap"><button class="btn-sg btn-forest" type="button" data-reload><i class="bi bi-arrow-clockwise"></i> Retry</button>
+        ${posLink ? html`<a class="btn-sg btn-soft" href="/pos.html"><i class="bi bi-upc-scan"></i> Open Point of Sale</a>` : ''}</div></div></div>`);
       document.querySelector('main [data-reload]').addEventListener('click', () => location.reload());
     }
   }
@@ -277,6 +298,15 @@
           const opt = typeof o === 'object' ? o : { value: o, label: o };
           return html`<option value="${opt.value}" ${String(opt.value) === String(v) ? raw('selected') : ''}>${opt.label}</option>`;
         })}</select>`;
+      case 'multiselect': {
+        const selected = Array.isArray(v) ? v.map(String) : [];
+        const opts = f.options || [];
+        if (!opts.length) return html`<div class="form-text" id="${id}">${f.emptyText || 'No options available.'}</div>`;
+        return html`<div class="check-list" id="${id}" role="group">${opts.map((o, i) => {
+          const opt = typeof o === 'object' ? o : { value: o, label: o };
+          return html`<label class="check-pill" for="${id}_${i}"><input type="checkbox" id="${id}_${i}" name="${f.name}" value="${opt.value}" ${selected.includes(String(opt.value)) ? raw('checked') : ''}><span>${opt.label}</span></label>`;
+        })}</div>`;
+      }
       case 'textarea':
         return html`<textarea class="form-control" rows="${f.rows || 3}" maxlength="${f.max || 500}" ${common} placeholder="${f.placeholder || ''}">${v}</textarea>`;
       case 'checkbox':
@@ -323,6 +353,10 @@
       for (const f of fields) {
         if (f.type === 'html') continue;
         if (f.type === 'hidden') { out[f.name] = values[f.name]; continue; }
+        if (f.type === 'multiselect') {
+          out[f.name] = [...form.querySelectorAll('input[type="checkbox"]:checked')].filter(i => i.name === f.name).map(i => i.value);
+          continue;
+        }
         const input = form.elements[f.name];
         if (!input) return;
         if (f.type === 'image') {
@@ -380,6 +414,13 @@
       this.opts = Object.assign({ pageSize: 15, empty: { icon: 'bi-inbox', title: 'Nothing here yet', text: '' } }, opts);
       this.page = 1; this.rows = []; this.total = 0; this.sort = null; this.loading = false;
       this.el.addEventListener('click', e => this.onClick(e));
+      // Keyboard users open a clickable row with Enter / Space.
+      this.el.addEventListener('keydown', e => {
+        if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('tr.clickable[data-i]') && this.opts.onRowClick) {
+          e.preventDefault();
+          this.opts.onRowClick(this._rendered[parseInt(e.target.dataset.i, 10)]);
+        }
+      });
       if (this.opts.rows) this.setRows(this.opts.rows); else if (this.opts.load) this.reload();
     }
     get serverMode() { return typeof this.opts.load === 'function'; }
@@ -412,7 +453,13 @@
       const rows = this.loading ? [] : this.visibleRows();
       const pages = Math.max(1, Math.ceil(this.total / this.opts.pageSize));
       if (this.page > pages) { this.page = pages; if (!this.serverMode) return this.render(); }
-      const head = html`<tr>${cols.map(c => html`<th class="${c.className || ''} ${c.sortable && !this.serverMode ? 'sortable' : ''}" data-sort="${c.sortable && !this.serverMode ? c.key : ''}" scope="col">${c.label}${this.sort && this.sort.key === c.key ? html` <i class="bi bi-caret-${this.sort.dir > 0 ? 'up' : 'down'}-fill"></i>` : ''}</th>`)}</tr>`;
+      const head = html`<tr>${cols.map(c => {
+        const sortable = c.sortable && !this.serverMode;
+        const active = this.sort && this.sort.key === c.key;
+        const ariaSort = !sortable ? '' : active ? (this.sort.dir > 0 ? 'ascending' : 'descending') : 'none';
+        const label = html`${c.label}${active ? html` <i class="bi bi-caret-${this.sort.dir > 0 ? 'up' : 'down'}-fill" aria-hidden="true"></i>` : ''}`;
+        return html`<th class="${c.className || ''} ${sortable ? 'sortable' : ''}" scope="col" ${ariaSort ? html`aria-sort="${ariaSort}"` : ''}>${sortable ? html`<button type="button" class="th-sort" data-sort="${c.key}">${label}</button>` : label}</th>`;
+      })}</tr>`;
       let bodyRows;
       if (this.loading) {
         bodyRows = html`${[1, 2, 3, 4].map(() => html`<tr>${cols.map(() => html`<td><div class="skeleton"></div></td>`)}</tr>`)}`;
@@ -420,7 +467,7 @@
         const e = this.opts.empty;
         bodyRows = html`<tr><td colspan="${cols.length}"><div class="empty-state"><i class="bi ${e.icon}"></i><div class="title">${e.title}</div><div class="small">${e.text}</div></div></td></tr>`;
       } else {
-        bodyRows = html`${rows.map((r, i) => html`<tr class="${this.opts.onRowClick ? 'clickable' : ''} ${this.opts.rowClass ? this.opts.rowClass(r) : ''}" data-i="${i}">${cols.map(c => html`<td class="${c.className || ''}">${c.render ? c.render(r) : (r[c.key] ?? '—')}</td>`)}</tr>`)}`;
+        bodyRows = html`${rows.map((r, i) => html`<tr class="${this.opts.onRowClick ? 'clickable' : ''} ${this.opts.rowClass ? this.opts.rowClass(r) : ''}" data-i="${i}" ${this.opts.onRowClick ? raw('tabindex="0"') : ''}>${cols.map(c => html`<td class="${c.className || ''}">${c.render ? c.render(r) : (r[c.key] ?? '—')}</td>`)}</tr>`)}`;
       }
       const start = this.total ? (this.page - 1) * this.opts.pageSize + 1 : 0;
       const end = Math.min(this.page * this.opts.pageSize, this.total);
@@ -439,7 +486,7 @@
     onClick(e) {
       const pageBtn = e.target.closest('[data-page]');
       if (pageBtn && !pageBtn.disabled) { this.page = parseInt(pageBtn.dataset.page, 10); this.serverMode ? this.reload() : this.render(); return; }
-      const th = e.target.closest('th[data-sort]');
+      const th = e.target.closest('[data-sort]');
       if (th && th.dataset.sort) { const key = th.dataset.sort; this.sort = this.sort && this.sort.key === key ? { key, dir: -this.sort.dir } : { key, dir: 1 }; this.render(); return; }
       const actionBtn = e.target.closest('[data-action]');
       const tr = e.target.closest('tr[data-i]');
@@ -587,14 +634,16 @@
       <div class="sg-search" role="search"><i class="bi bi-search"></i><input type="search" id="sgSearch" placeholder="Search products, receipts, customers, staff…" autocomplete="off" aria-label="Search"><div class="sg-search-results" id="sgSearchResults" role="listbox"></div></div>
       <div class="sg-topbar-right">
         <span class="sg-pill hide-md"><i class="bi bi-calendar3"></i><span>${new Date().toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: tz() })}</span></span>
-        <span class="sg-conn" id="sgConn"><i class="bi bi-wifi"></i><span class="hide-sm">Online</span></span>
+        <button class="btn-sg btn-soft sm d-none" type="button" id="sgInstall" title="Install StoreGuard as an app on this device"><i class="bi bi-download"></i><span class="hide-sm">Install app</span></button>
+        <span class="sg-conn" id="sgConn" role="status"><i class="bi bi-wifi" aria-hidden="true"></i><span class="hide-sm">Online</span></span>
         <div class="dropdown"><button class="sg-icon-btn" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-label="Notifications" id="sgBell"><i class="bi bi-bell"></i><span class="dot-count d-none" id="sgBellCount"></span></button>
           <div class="dropdown-menu dropdown-menu-end sg-notif-menu" id="sgNotifMenu"><div class="head">Notifications</div>${loader('Checking for updates…', { size: 'sm' })}</div></div>
         <div class="dropdown"><button class="sg-profile-btn" type="button" data-bs-toggle="dropdown" aria-label="Account menu">${s.user.image ? html`<img class="sg-avatar sm avatar-image" src="${s.user.image}" alt="">` : html`<span class="sg-avatar sm">${s.user.initials}</span>`}<i class="bi bi-chevron-down small"></i></button>
           <ul class="dropdown-menu dropdown-menu-end"><li class="px-3 py-2"><div class="fw-600 small">${s.user.name}</div><div class="small-xs text-muted-sg">${s.user.email}</div></li><li><hr class="dropdown-divider"></li>
           <li><a class="dropdown-item small" href="/profile.html"><i class="bi bi-person me-2"></i>My profile</a></li>
           ${can('settings') ? html`<li><a class="dropdown-item small" href="/settings.html"><i class="bi bi-gear me-2"></i>Settings</a></li>` : ''}
-          <li><a class="dropdown-item small" href="/help.html"><i class="bi bi-question-circle me-2"></i>Help</a></li><li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item small" href="/help.html"><i class="bi bi-question-circle me-2"></i>Help</a></li>
+          <li><a class="dropdown-item small" href="/#install"><i class="bi bi-laptop me-2"></i>Install or download</a></li><li><hr class="dropdown-divider"></li>
           <li><button class="dropdown-item small text-danger" type="button" data-logout><i class="bi bi-box-arrow-right me-2"></i>Sign out</button></li></ul></div>
       </div>`);
     const footer = document.createElement('footer');
@@ -617,9 +666,27 @@
     });
     overlay.addEventListener('click', () => document.body.classList.remove('sidebar-open'));
     wireSearch(topbar.querySelector('#sgSearch'), topbar.querySelector('#sgSearchResults'));
+    wireInstall(topbar.querySelector('#sgInstall'));
+    if (state.offlineBoot) {
+      const banner = document.createElement('div');
+      banner.className = 'offline-banner no-print';
+      banner.id = 'sgOfflineBoot';
+      banner.setAttribute('role', 'status');
+      setHTML(banner, html`<i class="bi bi-wifi-off" aria-hidden="true"></i><span>Offline mode — opened with the details saved on this device${state.offlineSavedAt ? ` (${ago(state.offlineSavedAt)})` : ''}. ${can('pos') ? 'Sales still work and will sync when the connection returns.' : 'Pages update when the connection returns.'}</span>`);
+      main.before(banner);
+    }
     refreshNotifications();
     setInterval(refreshNotifications, 60000);
-    setOnline(navigator.onLine);
+    setOnline(navigator.onLine && !state.offlineBoot);
+  }
+
+  function wireInstall(button) {
+    if (!button || !window.SGPwa) return;
+    window.SGPwa.onChange(s => button.classList.toggle('d-none', !s.canPrompt || s.installed));
+    button.addEventListener('click', async () => {
+      const outcome = await window.SGPwa.install();
+      if (outcome === 'accepted') ok('StoreGuard is installed. Open it from your desktop, Start menu or home screen.');
+    });
   }
 
   function wireSearch(input, results) {
@@ -669,8 +736,38 @@
     } catch (e) { /* non-critical */ }
   }
 
+  /**
+   * Re-check the session with the server: picks up a fresh CSRF token after an offline start.
+   * Resolves true when signed in; false when offline or the session has ended (sign-in needed).
+   */
+  let refreshing = null;
+  function refreshSession() {
+    refreshing = refreshing || (async () => {
+      try {
+        const s = await request('/auth/me', { quiet401: true });
+        state.session = s; state.csrf = s.csrf_token; state.needsLogin = false;
+        sessionCache.save(s);
+        if (state.offlineBoot) {
+          state.offlineBoot = false;
+          const banner = document.getElementById('sgOfflineBoot');
+          if (banner) banner.remove();
+          toast('Back online.', 'success');
+        }
+        return true;
+      } catch (e) {
+        if (e.status === 401 && !state.needsLogin) {
+          state.needsLogin = true;
+          toast(html`Your session ended while this device was offline. <a href="/auth.html?next=${encodeURIComponent(location.pathname)}">Sign in again</a> to sync and continue — nothing saved on this device is lost.`, 'warning', 'Sign in needed');
+        }
+        return false;
+      } finally { refreshing = null; }
+    })();
+    return refreshing;
+  }
+
   function setOnline(online) {
     state.online = online;
+    if (online && state.offlineBoot && !refreshing) refreshSession();
     const el = document.getElementById('sgConn');
     if (el) {
       el.classList.toggle('offline', !online);
@@ -684,6 +781,7 @@
   async function logout() {
     const pending = offline.pending().length;
     if (pending && !(await confirmDialog({ title: 'Unsynced sales', message: `${pending} offline sale(s) have not synced yet. They stay saved on this device and will sync next time you sign in here. Sign out anyway?`, confirmText: 'Sign out', danger: true }))) return;
+    sessionCache.clear();
     try { await api.post('/auth/logout'); } catch (e) { /* ignore */ }
     location.href = '/auth.html';
   }
@@ -742,17 +840,27 @@
 
   async function bootInner(opts) {
     let session;
-    try { session = await request('/auth/me'); }
-    catch (e) {
-      if (e.status !== 401) {
-        document.body.classList.remove('sg-booting');
-        setHTML(document.body, html`<div class="container py-5"><div class="card-sg"><div class="empty-state"><i class="bi bi-cloud-slash"></i><div class="title">Can't reach StoreGuard</div><div class="small mb-3">${e.message}</div><button class="btn-sg btn-forest" type="button" id="sgRetry">Retry</button></div></div></div>`);
-        document.getElementById('sgRetry').addEventListener('click', () => location.reload());
+    try {
+      session = await request('/auth/me');
+      sessionCache.save(session);
+    } catch (e) {
+      const cached = e.status === 0 ? sessionCache.load() : null;
+      if (cached) {
+        // No connection, but this device was signed in before: open in offline mode.
+        session = cached.session;
+        state.offlineBoot = true;
+        state.offlineSavedAt = cached.saved_at;
+      } else {
+        if (e.status !== 401) {
+          document.body.classList.remove('sg-booting');
+          setHTML(document.body, html`<main class="container py-5"><div class="card-sg"><div class="empty-state"><i class="bi bi-cloud-slash"></i><div class="title">Can't reach StoreGuard</div><div class="small mb-3">${e.status === 0 ? 'The StoreGuard server isn\'t reachable and nobody has signed in on this device yet. Connect to the internet (or start StoreGuard on the store PC) and sign in once — after that the Point of Sale works offline.' : e.message}</div><button class="btn-sg btn-forest" type="button" id="sgRetry">Retry</button></div></div></main>`);
+          document.getElementById('sgRetry').addEventListener('click', () => location.reload());
+        }
+        return null;
       }
-      return null;
     }
     state.session = session;
-    state.csrf = session.csrf_token;
+    state.csrf = session.csrf_token || null;
     const main = document.querySelector('main');
     if (opts.layout !== 'bare') renderShell(main, opts);
     // Placeholder until the page script renders its content (it replaces main's HTML).
@@ -770,19 +878,30 @@
     save(list) { store.set(this.key(), list); document.dispatchEvent(new CustomEvent('sg:queue', { detail: list })); },
     enqueue(payload) { const list = this.pending(); list.push({ payload, queued_at: new Date().toISOString(), error: null }); this.save(list); },
     discard(clientRef) { this.save(this.pending().filter(x => x.payload.client_ref !== clientRef)); },
+    /** Problems that clear up on their own (connection, sign-in, server busy): keep the sale queued and retry later. */
+    transient(err) {
+      return err.status === 0 || err.status === 401 || err.status === 429 || err.status >= 500 ||
+        (err.status === 403 && /session has expired/i.test(err.message));
+    },
     async sync() {
-      if (this._syncing) return { synced: 0 };
+      if (this._syncing || !this.pending().some(x => !x.error)) return { synced: 0 };
       this._syncing = true;
       let synced = 0;
       try {
+        // After an offline start the CSRF token is missing: get a fresh one first.
+        if ((state.offlineBoot || !state.csrf) && !(await refreshSession())) return { synced };
         for (const entry of this.pending()) {
           if (entry.error) continue;
           try {
-            await api.post('/sales', entry.payload);
+            // client_ref makes this idempotent: a retry after a lost response never records the sale twice.
+            await request('/sales', { method: 'POST', body: entry.payload, quiet401: true });
             this.save(this.pending().filter(x => x.payload.client_ref !== entry.payload.client_ref));
             synced++;
           } catch (err) {
-            if (err.status === 0) break; // still offline
+            if (this.transient(err)) {
+              if (err.status === 403 || err.status === 401) await refreshSession();
+              break;
+            }
             const list = this.pending();
             const hit = list.find(x => x.payload.client_ref === entry.payload.client_ref);
             if (hit) { hit.error = err.message; this.save(list); }
@@ -985,8 +1104,10 @@
     ago, duration, today, titleCase, paymentLabel, splitMomoRef, roleLabel, badge, PAYMENT_LABELS, PAYMENT_ICONS, MOMO_NETWORKS, CATEGORY_ICONS, ROLE_LABELS,
     store, toast, ok, fail, modal, confirm: confirmDialog, formModal, Table, exportCSV, SERIES, legend, lineChart, barChart,
     doughnut, can, canAny, boot, homeUrl, offline, loader, successMark, resizeImage: shrinkImage, receiptHTML, receiptDocument, receiptOptions, printReceipt, debounce, param, uuid, busy, rangeChips,
-    currencySymbol, logout,
+    currencySymbol, logout, refreshSession, cachedSession: () => sessionCache.load(),
     get session() { return state.session; },
     get online() { return state.online; },
+    /** True while the page is running from the session saved on this device (no server contact yet). */
+    get offlineBoot() { return state.offlineBoot; },
   };
 })();
