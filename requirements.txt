@@ -4,6 +4,8 @@ SQLAlchemy>=2.0,<2.1
 python-dotenv>=1.0,<2.0
 tzdata>=2024.1
 waitress>=3.0,<4.0
+# Production server on Linux hosts (Render, Railway, a VPS): gunicorn wsgi:app
+gunicorn>=23.0; sys_platform != "win32"
 pytest>=8.0,<9.0
 # PostgreSQL driver for production (DATABASE_URL=postgresql+psycopg://...)
 psycopg[binary]>=3.1,<4.0; platform_python_implementation == "CPython"
