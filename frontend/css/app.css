@@ -334,6 +334,12 @@ main.sg-page { animation: sgFadeUp .35s ease backwards; }
 .kv-row.total { border-top: 2px solid var(--border); border-bottom: 0; padding-top: 10px; font-size: .95rem; }
 .list-row { display: flex; gap: 12px; align-items: flex-start; padding: 11px 0; border-bottom: 1px solid var(--border-soft); }
 .list-row:last-child { border-bottom: 0; }
+.launch { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
+.list-row-btn { width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--border-soft); color: inherit; font: inherit; cursor: pointer; border-radius: 0; }
+.list-row-btn:hover { background: var(--surface-2); }
+.table-sg th .th-sort { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 2px; }
+.table-sg th .th-sort:focus-visible { outline: 2px solid var(--emerald); outline-offset: 2px; border-radius: 3px; }
+.table-sg tbody tr.clickable:focus-visible { outline: 2px solid var(--emerald); outline-offset: -2px; }
 .list-row .main { flex: 1; min-width: 0; font-size: .84rem; }
 .list-row .meta { font-size: .72rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 2px; }
 .timeline { position: relative; padding-left: 22px; }

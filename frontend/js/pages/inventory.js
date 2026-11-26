@@ -220,9 +220,9 @@
     if (window.XLSX) return Promise.resolve(window.XLSX);
     xlsxLoading = xlsxLoading || new Promise((resolve, reject) => {
       const tag = document.createElement('script');
-      tag.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+      tag.src = '/vendor/xlsx/xlsx.full.min.js';
       tag.onload = () => resolve(window.XLSX);
-      tag.onerror = () => { xlsxLoading = null; reject(new Error('Could not load the spreadsheet reader. Check your internet connection and try again.')); };
+      tag.onerror = () => { xlsxLoading = null; reject(new Error('Could not load the spreadsheet reader. Reload the page and try again.')); };
       document.head.appendChild(tag);
     });
     return xlsxLoading;

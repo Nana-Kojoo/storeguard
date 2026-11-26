@@ -40,6 +40,8 @@ def create_app(test_config=None):
         ALLOW_REGISTRATION=os.getenv("ALLOW_REGISTRATION", "true").lower() == "true",
         FRONTEND_DIR=str(ROOT / "frontend"),
         AUTO_CREATE_TABLES=os.getenv("AUTO_CREATE_TABLES", "true").lower() == "true",
+        # Offer the "run it on your store PC" Windows download on the home page.
+        DOWNLOADS_ENABLED=os.getenv("DOWNLOADS_ENABLED", "true").lower() == "true",
         CSRF_DISABLED=False,
     )
     if test_config:
@@ -48,7 +50,8 @@ def create_app(test_config=None):
 
     if production and app.config["SECRET_KEY"] in ("", DEV_SECRET, "replace-me-in-development"):
         raise RuntimeError("SECRET_KEY must be set to a long random value when APP_ENV=production")
-    if production and app.config["SQLALCHEMY_DATABASE_URI"].startswith("sqlite"):
+    if (production and app.config["SQLALCHEMY_DATABASE_URI"].startswith("sqlite")
+            and os.getenv("LOCAL_INSTALL", "false").lower() != "true"):  # a single store PC is fine on SQLite
         logging.getLogger(__name__).warning("Running production on SQLite; use PostgreSQL for multi-user deployments")
 
     if int(os.getenv("TRUSTED_PROXIES", "0")):

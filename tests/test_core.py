@@ -35,15 +35,18 @@ def test_login_lockout_after_failed_attempts(owner):
     assert owner.login("owner@example.com").status_code == 423
 
 
-def test_password_change_invalidates_other_sessions(app, owner):
-    with app.test_client() as other_client:
-        from conftest import ApiClient
-        other = ApiClient(other_client)
-        assert other.login("owner@example.com").status_code == 200
-        r = owner.post("/auth/change-password", {"current_password": "correct horse battery 9",
-                                                 "new_password": "new secret phrase 42"})
-        assert r.status_code == 200
-        assert other.get("/auth/me").status_code == 401
+def test_password_change_invalidates_other_sessions(app):
+    # Two independent browser sessions. Neither client is opened with `with`: a preserved request
+    # context from one client would be shared (with its cached g.user) by the other's requests.
+    from conftest import ApiClient
+    owner = ApiClient(app.test_client())
+    owner.register()
+    other = ApiClient(app.test_client())
+    assert other.login("owner@example.com").status_code == 200
+    r = owner.post("/auth/change-password", {"current_password": "correct horse battery 9",
+                                             "new_password": "new secret phrase 42"})
+    assert r.status_code == 200
+    assert other.get("/auth/me").status_code == 401
     assert owner.get("/auth/me").status_code == 200
 
 

@@ -3,7 +3,10 @@
 Retail management and loss-prevention for supermarkets: POS with offline queue, inventory, suppliers and purchase orders, shifts and cash drawers, refunds with approvals, customers on credit, expenses, reports, security alerts and a full audit trail.
 
 - **Backend:** Flask 3 + SQLAlchemy (`storeguard/`) — JSON API under `/api`
-- **Frontend:** static HTML + vanilla JS (`frontend/`) — Bootstrap 5.3, Chart.js, no build step
+- **Frontend:** static HTML + vanilla JS (`frontend/`) — Bootstrap 5.3, Chart.js, no build step. All libraries and fonts are served locally from `frontend/vendor/`, so nothing loads from the internet.
+- **Installable app (PWA):** manifest + service worker; installs from Chrome/Edge/Safari and opens offline.
+
+The home page (`/`) explains the product, how to use it, and how to get it: install as an app, download for a store PC, or use in the browser. Signed-in users go to `/app`.
 
 ## Quick start (development)
 
@@ -61,9 +64,21 @@ Permissions can be customised per employee. Approvals enforce separation of duti
 
 The in-process rate limiter is per worker; put a shared limiter (e.g. at the proxy) in front for multi-node deployments.
 
-## Offline POS
+## Offline access
 
-If the connection drops, the POS keeps selling: sales are queued in the browser with a unique `client_ref` and synced automatically (idempotently) when the connection returns. Sales that fail to sync (e.g. stock ran out) are kept for review in the POS. Don't clear browser data on a till with unsynced sales.
+- **Installed app:** `frontend/sw.js` caches every page, script, style and font on first visit. Online, pages come from the network (always current); offline, from the cache. The server stamps a hash of the frontend files into the worker (`/sw.js`), so each deploy refreshes installed apps automatically. Service workers need HTTPS, or `localhost`.
+- **Offline start:** after one online sign-in, the device keeps a copy of the session (no credentials). With no connection, pages open in offline mode and `/app` goes straight to the POS.
+- **Offline POS:** sales are queued on the device with a unique `client_ref` and synced automatically (idempotently) when the connection returns. Connection, sign-in and server errors just retry later; sales the server rejects (e.g. stock ran out) are kept for review in the POS. The product, customer and shift details are cached for offline use. Don't clear browser data on a till with unsynced sales.
+- Reports, editing, refunds and approvals need the server.
+
+## Run on a store PC (Windows download)
+
+`GET /download/storeguard-windows.zip` (the **Download for Windows** button on the home page) bundles the app with `packaging/windows/`:
+`Start StoreGuard.bat` (sets up Python on first run, then starts), `run_local.py` (creates `.env` with a random secret, takes a daily database backup in `backups/`, serves on port 8000, opens the browser) and `READ ME FIRST.txt` for the owner. The PC becomes the store's own server, so the tills don't need the internet. Set `DOWNLOADS_ENABLED=false` to hide the download.
+
+## Support contact
+
+The home page, the Help page, the offline page and the Windows download show who to contact for help. Set `SUPPORT_NAME`, `SUPPORT_ROLE`, `SUPPORT_EMAIL`, `SUPPORT_PHONE`, `SUPPORT_WHATSAPP`, `SUPPORT_WEBSITE` and `SUPPORT_HOURS` (see `.env.example`); empty values are hidden. The values are served at `/support.json` and copied into each download as `support.json` and at the end of `READ ME FIRST.txt`.
 
 ## Tests
 
@@ -79,7 +94,9 @@ storeguard/          Flask app (models, security, API blueprints, CLI)
   api/sales.py       sales, refunds, customers
   api/operations.py  shifts, cash drawer, attendance, expenses
   api/admin.py       employees, alerts, approvals, audit, devices, settings, reports, dashboard, search
-frontend/            pages (*.html), css/app.css, js/storeguard.js (core), js/pages/*.js
+frontend/            pages (*.html), home.html (product page), css/, js/storeguard.js (core), js/pwa.js, js/pages/*.js
+  sw.js, manifest.webmanifest, icons/, vendor/ (local copies of Bootstrap, icons, Chart.js, SheetJS, Inter)
+packaging/windows/   launcher files bundled into the Windows download
 tests/               pytest suite
 _legacy_ui/          previous static mock-ups (not served; safe to delete)
 ```

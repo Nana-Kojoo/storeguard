@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Offline · StoreGuard</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#0f3d2b">
+  <link rel="stylesheet" href="/vendor/inter/inter.css">
+  <link rel="stylesheet" href="/vendor/bootstrap-icons/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <main class="launch">
+    <div class="card-sg" style="max-width:480px;width:100%">
+      <div class="empty-state">
+        <i class="bi bi-wifi-off" aria-hidden="true"></i>
+        <h1 class="title" style="font-size:1.2rem">You're offline</h1>
+        <p class="small">StoreGuard can't reach the server right now, and this page hasn't been saved on this device yet.</p>
+        <p class="small">If you have signed in on this device before, the <b>Point of Sale</b> still works: sales are saved here and sync automatically when the connection returns.</p>
+        <div class="d-flex gap-2 justify-content-center flex-wrap mt-3">
+          <a class="btn-sg btn-forest" href="/pos.html"><i class="bi bi-upc-scan" aria-hidden="true"></i> Open Point of Sale</a>
+          <a class="btn-sg btn-soft" href=""><i class="bi bi-arrow-clockwise" aria-hidden="true"></i> Try again</a>
+        </div>
+        <p class="small-xs text-muted-sg mt-3 mb-0">Running StoreGuard on a store PC? Make sure its StoreGuard window is open.</p>
+        <p class="small-xs text-muted-sg mt-2 mb-0">Still stuck? See <a href="/#faq">troubleshooting</a> or <a href="/#support">contact support</a>.</p>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

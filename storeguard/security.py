@@ -131,13 +131,16 @@ def check_request_security():
     return None
 
 
+# Every script, style and font is served from this server (frontend/vendor), so the app
+# works with no internet connection and no third-party origin is trusted.
 CSP = (
     "default-src 'self'; "
-    "script-src 'self' https://cdn.jsdelivr.net; "
-    "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
-    "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com data:; "
+    "script-src 'self'; "
+    "style-src 'self' 'unsafe-inline'; "
+    "font-src 'self' data:; "
     "img-src 'self' data: blob:; "
     "connect-src 'self'; "
+    "worker-src 'self'; manifest-src 'self'; "
     "frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
 )
 
